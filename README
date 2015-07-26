@@ -1,0 +1,5 @@
+Efficient implementation of algorithms for optimal resolution of the Peerwise Sequence Alignment problem.
+Sequence Alignment has  a  great  biological  interest  being  a  key  to  finding  important  regions in the genome, determining its functions and uncovering evolutionary
+forces.
+This work is part of the ALiBio project which aim is to provide a collection of useful libraries for the development of bioinformatics programs, with special regard to the efficiency of the implementation
+The code is an example of literate programming.
