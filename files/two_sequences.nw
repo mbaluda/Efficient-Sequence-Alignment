@@ -1,0 +1,3144 @@
+\documentclass[12pt,a4paper,oneside,openright]{book}
+\usepackage[dvips]{graphicx}
+\usepackage{fancyheadings}
+\usepackage{verbatim}
+\usepackage{noweb}
+\noweboptions{longchunks,smallcode,longxref,webnumbering,hyperidents}
+\RequirePackage[colorlinks,hyperindex]{hyperref}
+
+% command \synopsis for typesetting the synopsis table
+\newcommand{\synopsis}[6]
+{#1 \texttt{(#2)}\hfill$\mapsto$\hfill #3\\
+\textsf{Description: }#4\\
+\textsf{Precondition: }#5\\
+\textsf{Postcondition: }#6\\\\}
+
+\begin{document}
+\thispagestyle{empty}
+
+\vspace*{1in}
+\begin{center}
+\textsc{\Huge Sequence Alignment Algorithms}\\[1cm]
+\textsc{\Large Algoritmi per l'Allineamento di Sequenze}\\
+\end{center}
+
+\vspace*{1in}
+\begin{flushleft}
+{\Large Relatore: Prof. Giancarlo Mauri\\}
+{\Large Correlatore: Prof. Gianluca Della Vedova\\}
+\end{flushleft}
+
+\vspace*{1in}
+\begin{flushright}
+\Large Tesi di Laurea di:\\
+\Large Mauro Baluda\\
+\Large Matricola 038208\\
+\end{flushright}
+
+\vspace{1cm}
+\begin{center}
+\Large Part of ALiBio project\\
+\texttt{http://www.alibio.org/}
+\end{center}
+
+\frontmatter
+
+\chapter*{Preface}
+
+\section*{ALiBio Goal}
+
+In a few words the goal of ALiBio is to give libraries and efficient
+fundamental algorithm to be used when developing applications in the
+bioinformatics field.
+
+The large amount of biological data available nowadays makes the need
+of well-implemented efficient algorithm really stringent. Various projects
+(Open Bioinformatics Foundation) are already giving a number of libraries
+to the developer community.
+
+The focus of those projects has always been on the ease of use, especially
+for people coming from the Biology field, and efficiency issues have not
+been the top priority.
+
+On the other hand ALiBio is targetting the developer community with a strong
+CS background. ALiBio is suited for developing highly optimized applications
+where efficiency is paramount.
+
+Two more issues that will receive a lot of attention in this project are testing
+and documentation. All libraries and algorithms that will be included in ALiBio
+must have an extensive suite of regression tests and must be clearly documented.
+In fact we require the use of noweb for developing code to be included in ALiBio.
+
+The advantages of Free Software \ref{def-freesoft} are well-known. ALiBio is a free library, at the same time it can be used also for developing non-free software. While we
+encourage the development of free software, we do not require it in order to
+use ALiBio.
+
+\newpage
+
+\title{Sequence Alignment Algorithms}
+\author{Mauro Baluda}
+
+\maketitle
+
+\mainmatter
+
+\tableofcontents
+
+\chapter{Introduction}
+
+\section{Objective of the stage}
+
+The purpose of this stage is to realize an efficient implementation of
+algorithms for Sequence Alignment.
+The stage is inserted within the project ALiBio (Algorithm Library for
+Bioinformatics), which aim is to provide a collection of useful libraries
+for the development of bioinformatics programs, with special regard to the
+efficiency of the implementation. The exponential growth of interest for
+this sector, and for what can be tied up with it, has also brought the
+necessity to realize some informatic structures able to efficiently manage
+the increasing quantity of biological data.
+
+When I started the stage, the data structures, useful to represent biological
+information such as sequences of DNA, RNA and proteins, were already implemented.
+I will base my algorithm implementation upon these data structures.
+
+\section{Sequence Alignment}
+
+In detail, I will implement algorithms for global alignment \ref{def-global_alignment} local alignment \ref{def-local_alignment} and semiglobal alignment \ref{def-semiglobal_alignment} following the specifications of the project.
+This algorithms are designed for finding the best possible alignment between two
+given sequences of symbols.
+Alignment algorithms are used to compare the sequence homology between two protein
+or DNA sequences. These programs find the best match between the two sequences.
+Occasionally gaps need to be introduced to make the two sequences align.
+
+Global alignment algorithms attempt to match sequences from end to end, even though parts of the alignment are not very convincing. for example:
+\begin{verbatim}
+
+    ATTAGCATTAGAC-T-
+     XXX| X|||XX| |
+    -GCCG-TTTATTCTTC
+\end{verbatim}
+
+On the other hand local alignment algorithms search for segments of the two sequences that match well. Using the same sequences as above, we could get:
+\begin{verbatim}
+
+    ATTAGCATTAGACT
+        |||XX||
+    GCCGTTTATTCTTC
+\end{verbatim}
+
+Semiglobal alignments instead try to allineat a prefix of one of the sequences with a suffix of the other giving
+\begin{verbatim}
+
+    ATTAGCA--TTAGACT
+        ||X  |||XX||
+        GCCGTTTATTCTTC
+\end{verbatim}
+
+\section{Specifications of the project}
+
+As stated before, in developing the stage, I have followed the guide-lines
+defined by the AliBio project. The first requisite is to produce the job using
+a tool of literate programming (noweb). The literate programming allows to
+write in a single file the implemented code and its documentation maintaining
+the choice of the programming language independent.
+Concerning the documentation, has been chosen the \LaTeX writing system, which
+produces high quality scientific and mathematical documentation, that has a
+fundamental role in the project: it must be wide and very comprehensible to
+guarantee the maximum code readability and re-usability.
+
+As regards the programming language, the ALiBio project has chosen to use  C++
+to implement its own library which probably, along with the C, it is the most
+used language by the developers of scientific applications all over the world.
+This choice guarantees a high portability with all the compilers that respect
+the ISO/OSI standard, and therefore a high compatibility of the code with any
+hardware platform. Besides exploiting the fundamental characteristics of the
+C++, the project also embraces the concept of generic programming, as the one
+offered by the efficient Standard Template Library, widely used by the project.
+This means that a certain level of independence can be maintained from the
+specific types of the data. For example the type [[vector]] of the STL allows
+to define a vector of elements, whose type can be freely chosen, and at the same
+time it offers a whole set of efficient functions for its management. This fact
+guarantees a high flexibility using the libraries.
+
+To develop the project another important library has been used: the Boost
+Library. This is a library of free use that furnishes a series of optimized
+tools for managing data structures as multidimensional matrixes, lists, graphs,
+trees but also mathematical functions, input/output functions and many more. It
+is so well liked by  developers that it is reaching the qualification of
+standard.
+
+From a legal and distributive point of view, ALiBio adopts the philosophy of the
+free software, making the code and the documentation of the project accessible
+to all the developers. In this way, whoever can offer his contribution in the
+development of the library, improving it and expanding it. Clearly, to do this,
+it is necessary to follow those which are the specifications of the project and
+the conventions used to write documentation and code, to maintain the necessary
+uniformity of the final job. Besides, anyone can freely include the AliBio
+libraries inside its own program or freely redistributes the libraries under the
+GNU Lesser General Public License.
+
+\section{Phases of development}
+\subsection{Learning the tools}
+Before being able to proceed with the purely implementative phase, I dedicated a
+period of time studying the necessary tools for the realization of the project.
+All the  software used (noweb, \LaTeX, Gnu C++ Compiler, CVS and its graphical
+user interface Cervisia) is freely available for the Linux operating system, so
+I decided to exploit this opportunity and to deepen my knowledge of this system
+and acquire a certain familiarity with it.
+
+While for the  C++ language and the
+object oriented programming I had all the necessary knowledge, I had to learn
+about the use of noweb \cite{noweb}, \LaTeX \cite{LaTeX} and CVS \cite{CVS}. As
+stated before, noweb has been selected as tool for the literate programming,
+\LaTeX for the writing of the documentation. CVS is the software adopted by the
+ALiBio project for the version control and the tracing of changes, brought by
+every single developer, to the project files.
+
+Concerning the programming part of the work I had to learn about the libraries
+that were unknown to me, as the Standard Templates Library and the Boost Library,
+both through the on-line documentation \cite{boost} and specific books
+\cite{cpp}. Clearly I have also studied the documentation of the portion of project
+already realized.
+
+\subsection{Study of the algorithm}
+Once I understood the necessary tools for the realization of the project, I went
+on to study the algorithm that I would have to implement, using the article
+written by its authors:
+
+\subsection{Algorithm implementation}
+The implementation phase of the Neighbor-Joining has also brought the necessity
+to realize, besides the algorithm, a specific object to contain in a single
+structure the data related to the evolutionary distances, that would have
+constituted the input of the  algorithm itself. Essentially, this object
+(called [[<<score_matrix>>]]), is formed by a bidimensional matrix containing
+the distances among the couples of biological entities, a vector containing the
+labels that identify the entities and a whole series of functions necessary for
+input, output and control operations. As output is used the tree structure,
+already implemented in the project, realized for such purpose.
+
+The algorithm is implemented by a single function that receives as input the
+[[<<score_matrix>>]] object, then initializes the inside structures, performs the
+principal loop (that represents the heart of the algorithm) and it finishes
+returning the complete evolutionary tree.
+
+\subsection{Realization of example programs}
+To facilitate the job of the developers who want to use the library I
+implemented, I wrote two example programs which show how it is possible to
+include and to exploit the functionalities of the library in their programs.
+The first one can be considered a demonstrative program: it doesn't receive
+input from the user, but gives as input of the algorithm the matrix of the
+distances used as example in the article that describes the Needleman-Wunsch
+and then it stamps the resulting evolutionary tree. The second program asks the
+user to insert all the information regarding the biological entities of which he
+want to esteem the evolutionary tree. With this information, the program creates
+an object [[<<score_matrix>>]] that subsequently will be passed as input to the
+algorithm. At the end the resulting evolutionary tree is printed on the standard
+output.
+
+\subsection{Writing the regression tests}
+In the project a lot of importance is given to the tests phase. Once the code
+has been written, it's necessary to write some special tests able to verify its
+correctness. The adopted technique is the \emph{automatic regression tests} that
+allows to compare the actual output of the test with the expected output or the
+output of a previous version of the implementation. The project adopts some
+conventions to write these tests. The purpose is to check the input and the
+output attended for every single test and to automate their execution
+accomplished by a dedicated \emph{script}. Respecting these conventions, the program is
+written to develop the tests on every single element of the library. The input
+of the tests is studied to cover all the possible situations that can happen
+using every single element of the library. Besides, the tests are performed in a
+particular order trying to avoid, as far as possible, the test of a function that
+calls a function not yet tested.
+
+In my studies, two test programs have been implemented: one for testing the
+correctness and functionalities of the [[<<score_matrix>>]], the other one
+to verify the correct execution of the [[<<seq_alignment>>]] (which
+implements the alignment algorithms). The files used as input of the \emph{script}
+which executes the test programs, besides  containing the input for each test,
+they show the correspondent expected output. This will be compared with the actual
+output by the \emph{script} which establishes the success rather than the failure
+of the execution.
+
+\subsection{Writing the documentation}
+The documentation of the job (written in English) is constituted by:
+\begin{enumerate}
+\item an introductory part that describes the global project,
+\item a section containing the necessary definitions for a better understanding
+of the code,
+\item a wide description of the code to explain its functionality,
+\item the descriptive part of the example programs and the tests,
+\item the synopsis tables containing, for each function, a brief description,
+the necessary prerequisites and the effect of its execution.
+\end{enumerate}
+
+\section{Conclusions}
+Once finished the stage period, the proposed objectives were reached. In fact
+it has been produced the requested algorithm implementation with its
+documentation according to the project standard. However, there is a margin of
+improvement, both optimizing the code (finding different implementative solutions),
+and increasing its functionalities.
+
+The free software nature of the ALiBio project is another incentive for its
+improvement. In fact the bioinformatics software developers can freely use the
+libraries inside their own programs, but also contribute with their own
+improvements and their expansions in developing the ALiBio libraries.
+
+\chapter{Sequence alignment algorithms}
+\section{Definitions}
+\subsection{alphabet}\label{def-alphabet}
+\subsection{sequence}\label{def-sequence}
+\subsection{alignment}\label{def-alignment}
+\subsection{score}\label{def-score}
+\subsection{match}\label{def-match}
+\subsection{mismatch}\label{def-mismatch}
+\subsection{gap}\label{def-gap}
+\subsection{gap opening}\label{def-gap_opening}
+\subsection{linear gap penalty}\label{def-lin_gap}
+\subsection{affine gap penalty}\label{def-aff_gap}
+\subsection{gap extension}\label{def-gap_extension}
+\subsection{global alignment}\label{def-global_alignment}
+\subsection{local alignment}\label{def-local_alignment}
+\subsection{semiglobal alignment}\label{def-semiglobal_alignment}
+\subsection{Free software}\label{def-freesoft}
+
+\section{Classical algoritms}
+\subsection{Needleman-Wunsch algorithm}
+\subsection{Smith-Waterman algorithm}
+
+\section{Affine gap penalties}
+
+\section{Linear space alignment}
+\subsection{Linear space cost-only alignment}
+\subsection{Track back the alignment}
+
+\chapter{Implementation}
+\section{Library structure}
+To implement sequence alignment algorithms we decided to divide the work in two
+different classes:
+\begin{itemize}
+\item[-] [[<<score_matrix>>]] class implementing
+\item[-] [[<<seq_alignment>>]] class implementing the alignment algorithms.
+\end{itemize}
+
+<<two_sequence.hpp>>=
+<<licence>>
+#ifndef ALIBIO_TWO_SEQUENCE_INCLUDED
+#define ALIBIO_TWO_SEQUENCE_INCLUDED
+<<include>>
+<<namespace>>
+{
+  <<score_matrix>>
+  <<seq_alignment>>
+}
+#endif //ALIBIO_TWO_SEQUENCE_INCLUDED
+@
+
+\section{The licence}
+As stated before, ALiBio project is publised under a free software licence so the program begins with the opportune references
+
+<<licence>>=
+//ALiBio: Algorithms Library for Bioinformatics
+//Copyright (C) 2002-2006:
+//Gianluca Della Vedova, Riccardo Dondi, Luca Fossati,
+//Lorenzo Mariani, Francesco Rossi.
+//
+//This library is free software; you can redistribute it and/or
+//modify it under the terms of the GNU Lesser General Public
+//License as published by the Free Software Foundation; either
+//version 2.1 of the License, or (at your option) any later version.
+//
+//This library is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//Lesser General Public License for more details.
+//
+//You should have received a copy of the GNU Lesser General Public
+//License along with this library; if not, write to the Free Software
+//Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+//
+//http://bioinformatics.org/ALiBio
+//
+//Lab. Bioinformatica
+//DISCo, Univ. Milano-Bicocca
+//via Bicocca degli Arcimboldi 8
+//20126 Milano (Italy)
+@
+
+\section{Included libraries}
+For our implementation we used a lot of external libraries:
+Let's begin with libraries from the standard c++
+<<include>>=
+#include <stdlib.h>
+#include <assert.h>
+#include <iostream>
+#include <new>
+@
+
+We also needeed some data structures that was already implemented as parts of the ALiBio project:
+<<include>>=
+#include <alibio/sequence.hpp>
+#include <alibio/bio_string.hpp>
+#include <alibio/empty.hpp>
+@
+
+From the boost project we used the Boost.MultiArray library which provides a generic N-dimensional array concept definition and common implementations of that interface.
+<<include>>=
+#include <boost/multi_array.hpp>
+@
+
+We will use the namespace std
+<<namespace>>=
+using namespace std;
+@
+
+Every element of this library belongs to the namespace [[alibio]].
+<<namespace>>=
+namespace alibio
+@
+
+\section {The [[score_matrix]] class}
+Let's separate class interface from implementation
+
+<<score_matrix>>=
+<<score_matrix interface>>
+<<score_matrix implementation>>
+@
+
+\subsection {[[score_matrix]] interface}
+<<score_matrix interface>>=
+template <class T=float>
+class score_matrix{
+private:
+<<private variables of score_matrix>>
+<<private functions of score_matrix>>
+public:
+<<functions exported by score_matrix>>
+};
+@
+
+\subsection {Private variables of [[score_matrix]]}
+The [[<<score_matrix>>]] class relies on the [[boost::multi_array]] for representing the actual matrix data, the alphabet is memorized in a [[vector<char>]] object according to the [[alibio::alphabet]] implementation.
+It also keeps an [[int]] for the alphabet size.
+<<private variables of score_matrix>>=
+    boost::multi_array<T, 2> *data;
+    vector<char> alphabet;
+    T gap_cost, extend_gap_cost;
+    int lnt;
+@
+
+\subsection {Private functions of [[score_matrix]]}
+The [[<<score_matrix>>]] class
+<<private functions of score_matrix>>=
+int find_char_pos(char letter, int low, int high) const;
+@
+
+\subsection {Functions exported by [[score_matrix]]}
+The [[<<score_matrix>>]] class provides several functions which offer a useful interface to the internal data structures.
+The following is a brief description of each function:
+\begin{itemize}
+\item [[<<score_matrix constructor>>]]: Creates a score matrix for the given alphabet: default scores are 1 for matching and -1 for gaps and substitution of a symbol.
+\item [[<<score_matrix destructor>>]]: frees memory after a deallocation.
+\item [[<<set_score>>]]: Replaces the score of switching between the given chars.
+\item [[<<get_score>>]]: Returns the score of switching between the given chars.
+\item [[<<set_match_score>>]]: Replaces the score of symbol matches.
+\item [[<<set_mismatch_score>>]]: Replaces the score of changing a symbol.
+\item [[<<set_gap_cost>>]]: Sets the cost of inserting and extending a gap.
+\item [[<<get_gap_cost>>]]: Returns the cost of inserting a gap.
+\item [[<<get_extend_gap_cost>>]]: Returns the cost of inserting a gap.
+\item [[<<print>>]]: Prints on the standard output the score matrix.
+\end{itemize}
+
+<<functions exported by score_matrix>>=
+    score_matrix(const alibio::alphabet& alph);
+    ~score_matrix();
+    void set_score(char a, char b, T val);
+    T get_score(char a, char b) const;
+    void set_match_score(T val);
+    void set_mismatch_score(T val);
+    void set_gap_cost(T val);
+    void set_gap_cost(T val, T ext_val);
+    T get_gap_cost() const;
+    T get_extend_gap_cost() const;
+    void print() const;
+@
+
+\subsection {[[score_matrix]] implementation}
+<<score_matrix implementation>>=
+<<score_matrix constructor>>
+<<score_matrix destructor>>
+<<find_char_pos>>
+<<set_score>>
+<<get_score>>
+<<set_match_score>>
+<<set_mismatch_score>>
+<<set_gap_cost>>
+<<get_gap_cost>>
+<<get_extend_gap_cost>>
+<<print>>
+@
+
+\subsection {Constructors implementation}
+The constructor implementation has an [[alibio::alphabet]] object as parmeter.
+It adds the symbol - to the given alphabet for representing a gap in the aligned sequence and then creates the [[<<score_matrix>>]] object using the [[boost::multi_array]] class.
+The size of the matrix is taken from the alphabet size and is kept in the [[lnt]] variable.
+Finally it populates the matrix with some default values: 1 for matching, -1 for symbol switching.
+Gap cost is initialized to 1.
+
+<<score_matrix constructor>>=
+template <class T>
+score_matrix<T>::score_matrix(const alibio::alphabet &alph){
+
+    vector<alibio::symbol> symbols=alph.get_all_symbols();
+    lnt=symbols.size();
+    alphabet.reserve(lnt);
+
+    vector<alibio::symbol>::iterator It;
+    for(It=symbols.begin(); It!=symbols.end(); It++)
+        alphabet.push_back((*It).get_id());
+
+    try{
+        data=new boost::multi_array< T, 2>(boost::extents[lnt][lnt]);
+    }
+    catch(const bad_alloc& x){
+        cerr<< "Out of memory in score_matrix(alphabet alph): "<<x.what()<<"\n";
+        abort();
+    }
+
+    //we sort the vector for fast (logaritmic) searching
+    sort(alphabet.begin(),alphabet.end());
+
+    vector<char>::iterator It1, It2;
+    for (It1=alphabet.begin(); It1!=alphabet.end(); It1++)
+        for (It2=alphabet.begin(); It2!=alphabet.end(); It2++)
+            if(It1==It2)
+                this->set_score(*It1,*It2,(T)1); //default score for match
+            else
+                this->set_score(*It1,*It2,(T)-1); //default score for mismatch
+
+    gap_cost=(T)1; //default cost for gap opening
+    extend_gap_cost=(T)1; //default cost for gap extending
+}
+@
+
+\subsection {Destructor implementation}
+<<score_matrix destructor>>=
+template <class T>
+score_matrix<T>::~score_matrix(){
+    delete data;
+}
+@
+
+\subsection {Finding a char}
+A function for finding a char in the alphabet with logaritmic cost.
+
+We could get a constant cost with an hash table but alphebet are normally small and calculating the hashes would take long...
+<<find_char_pos>>=
+template <class T>
+int score_matrix<T>::find_char_pos(char letter, int low, int high) const{
+  if (high < low) return -1;
+
+  int mid = (high + low) / 2;
+
+  if ( alphabet[mid] == letter) return mid;
+
+  if ( alphabet[mid] > letter) {
+    return find_char_pos (letter, low, mid-1);
+  } else {
+    return find_char_pos (letter, mid+1, high);
+  }
+}
+@
+
+\subsection {Setting the score}
+<<set_score>>=
+template <class T>
+void score_matrix<T>::set_score(char a, char b,  T val){
+    int x=find_char_pos(a, 0, lnt);
+    int y=find_char_pos(b, 0, lnt);
+
+    if(x==-1){
+        cerr << "Error: char "<< a<<" not present in the alphabet";
+        abort();
+    }
+    if(y==-1){
+        cerr << "Error: char "<<b <<" not present in the alphabet";
+        abort();
+    } 
+
+    (*data)[x][y]=val;
+    return;
+}
+@
+
+\subsection {Getting the score}
+<<get_score>>=
+//abort if doesn't find the given char
+template <class T>
+T score_matrix<T>::get_score(char a, char b) const{
+    int x=find_char_pos(a, 0, lnt);
+    int y=find_char_pos(b, 0, lnt);
+
+    if(x==-1){
+        cerr << "Error: char "<< a<<" not present in the alphabet";
+        abort();
+    }
+    if(y==-1){
+        cerr << "Error: char "<<b <<" not present in the alphabet";
+        abort();
+    } 
+
+    return (*data)[x][y];
+}
+@
+
+\subsection {Setting score for matching}
+<<set_match_score>>=
+template <class T>
+void score_matrix<T>::set_match_score(T val){
+    for (int i=0;i<lnt;i++)
+        (*data)[i][i]=val;
+}
+@
+
+\subsection {Setting score for mismatching}
+<<set_mismatch_score>>=
+template <class T>
+void score_matrix<T>::set_mismatch_score(T val){
+    for (int i=1;i<lnt;i++)
+        for (int j=0;j<i;j++){
+            (*data)[i][j]=val;
+                (*data)[j][i]=val;
+        }
+}
+@
+
+\subsection {Getting the cost for gap opening}
+<<get_gap_cost>>=
+template <class T>
+ T score_matrix<T>::get_gap_cost() const{
+    return gap_cost;
+}
+@
+
+\subsection {Setting the cost for opening and extending gaps}
+<<set_gap_cost>>=
+template <class T>
+void score_matrix<T>::set_gap_cost(T val){
+    gap_cost=val;
+    extend_gap_cost=val;
+
+}
+
+template <class T>
+void score_matrix<T>::set_gap_cost(T val, T ext_val){
+    gap_cost=val;
+    extend_gap_cost=ext_val;
+}
+@
+
+\subsection {Getting the cost for gap extending}
+<<get_extend_gap_cost>>=
+template <class T>
+T score_matrix<T>::get_extend_gap_cost() const{
+    return extend_gap_cost;
+}
+@
+
+\subsection {Printing the score matrix}
+<<print>>=
+template <class T>
+void score_matrix<T>::print() const{
+    //printing the score matrice
+    int m=lnt;
+
+    cout << "\t";
+    for (int j=0;j<m;j++){
+        cout<< alphabet[j] << "\t";
+    } cout << "\n";
+
+    for (int i=0;i<m;i++){
+        cout << alphabet[i] << "\t";
+        for (int j=0;j<m;j++){
+            cout <<  (*data)[i][j] << "\t";
+        }
+        cout <<  "\n";
+    }
+
+    cout << "gap cost=" << gap_cost << "\n";
+    cout << "gap extension cost=" << extend_gap_cost << "\n";
+}//end print()
+@
+
+
+\section {Sequence alignment class}
+<<seq_alignment>>=
+<<seq_alignment interface>>
+<<seq_alignment implementation>>
+@
+
+\subsection {[[seq_alignment]] interface}
+<<seq_alignment interface>>=
+template <class T=float>
+class seq_alignment{
+    private:
+<<private variables of seq_alignment>>
+<<private functions of seq_alignment>>
+    public:
+<<functions exported by seq_alignment>>
+};
+@
+
+\subsection {Private variables of [[seq_alignment]]}
+The [[<<seq_alignment>>]] class uses the [[boost::multi_array]] class for storing the matrix needed for its calculations
+<<private variables of seq_alignment>>=
+
+    //the score matrix
+    const score_matrix<T> *c_matrix;
+    //gap creation ad extention costs;
+    T gap_cost, extend_gap_cost;
+
+    //the sequences
+    const vector<char> *A, *B;
+    //sequence lengths
+    int m, n;
+
+    //Matrix for quadratic-space alignments
+    boost::multi_array<T, 2> *N;
+    //Matrix for affine-gap alignments
+    boost::multi_array<T, 3> *M;
+    //Second vectors for linear-space alignments
+    boost::multi_array<T, 3> *M1;
+
+    //start and end of the alignment
+    int min_m, min_n, max_m, max_n; //inizialized by constructors
+    //score of the alignment
+    T max_score;
+    //buffers for memorizing the alignment
+    vector<char> *line1, *line2, *line3;
+
+    //infinite negative for type T
+    T NEG_INFTY;
+@
+
+\subsection {Private functions of [[seq_alignment]]}
+<<private functions of seq_alignment>>=
+    void build_alignment(int i, int j);
+    void build_affine_alignment(int i, int j);
+    void build_linear_alignment(int i1, int j1, int i2, int j2,
+                                T A_begin_gap_cost, T A_end_gap_cost,
+                                T B_begin_gap_cost, T B_end_gap_cost);
+@
+
+\subsection {Functions exported by [[seq_alignment]]}
+<<functions exported by seq_alignment>>=
+    //constructors
+    seq_alignment(const score_matrix<T>& scores,
+                  const vector<char>& fst, const vector<char>& snd);
+    seq_alignment(const score_matrix<T>& scores,
+                  string fst, string snd);
+    seq_alignment(const score_matrix<T>& scores,
+                  alibio::bio_string fst, alibio::bio_string snd);
+    //destructor
+    ~seq_alignment();
+
+    //prints the last calculated alignment
+    void print_alignment();
+
+//classic alignment functions
+    //global - Needleman-Wunsch
+    void nw_align();
+    //local - Smiths-Waterman
+    void sw_align();
+
+//alignment functions using affine gap penalties
+    //global
+    void nw_affine_align();
+    //local
+    void sw_affine_align();
+    //semiglobal
+    void semiglobal_affine_align();
+
+//alignment functions using linear space - Myers-Miller
+    //global
+    void nw_linear_align();
+    //local
+    void sw_linear_align();
+    //semiglobal
+    void semiglobal_linear_align();
+@
+
+\subsection {[[seq_alignment]] implementation}
+<<seq_alignment implementation>>=
+<<seq_alignment constructors>>
+<<seq_alignment destructor>>
+
+<<print_alignment>>
+
+<<nw_align>>
+<<sw_align>>
+<<build_alignment>>
+
+<<nw_affine_align>>
+<<sw_affine_align>>
+<<semiglobal_affine_align>>
+<<build_affine_alignment>>
+
+<<nw_linear_align>>
+<<sw_linear_align>>
+<<semiglobal_linear_align>>
+<<build_linear_alignment>>
+@
+
+\subsection {Constructors implementation}
+<<seq_alignment constructors>>=
+template <class T>
+seq_alignment<T>::seq_alignment(const score_matrix<T>& scores,
+                             const vector<char>& fst, const vector<char>& snd){
+    try{
+        A=new vector<char>(fst);
+        B=new vector<char>(snd);
+    }
+    catch(const bad_alloc& x){
+        cerr << "Out of memory in seq_alignment constructor: "<< x.what()<<"\n";
+        abort();
+    }
+
+    <<common initializations>>
+}//end seq_alignment(score_matrix, vector<char>, vector<char>)
+
+template <class T>
+seq_alignment<T>::seq_alignment(const score_matrix<T>& scores,
+                                string fst, string snd){
+    try{
+        A=new vector<char>(fst.begin(),fst.end());
+        B=new vector<char>(snd.begin(),snd.end());
+    }
+    catch(const bad_alloc& x){
+        cerr << "Out of memory in seq_alignment constructor: "<<x.what()<<"\n";
+        abort();
+    }
+
+    <<common initializations>>
+}//end seq_alignment(score_matrix, string, string)
+
+template <class T>
+seq_alignment<T>::seq_alignment(const score_matrix<T>& scores,
+                             alibio::bio_string fst, alibio::bio_string snd){
+    try{
+        A=new vector<char>(fst.get_sequence().begin(),fst.get_sequence().end());
+        B=new vector<char>(snd.get_sequence().begin(),snd.get_sequence().end());
+    }
+    catch(const bad_alloc& x){
+        cerr << "Out of memory in seq_alignment constructor: "<<x.what()<<"\n";
+        abort();
+    }
+
+    <<common initializations>>
+}//end seq_alignment(score_matrix, bio_string, bio_string)
+@
+
+<<common initializations>>=
+    c_matrix=&scores;
+    gap_cost=c_matrix->get_gap_cost();
+    extend_gap_cost=c_matrix->get_extend_gap_cost();
+    NEG_INFTY=-numeric_limits<T>::max()/2;
+
+
+    m=A->size(); n=B->size();
+
+    //reinizialize min_m min_n max_m max_n max_score
+    min_m=0; max_m=m; min_n=0; max_n=n;
+    max_score=NEG_INFTY;
+
+    try{
+        line1=new vector<char>();
+        line2=new vector<char>();
+        line3=new vector<char>();
+    }
+    catch(const bad_alloc& x){
+        cerr << "Out of memory:" << x.what() << "\n";
+        abort();
+    }
+@
+
+\subsection {Destructor implementation}
+<<seq_alignment destructor>>=
+template <class T>
+seq_alignment<T>::~seq_alignment(){
+    delete A;
+    delete B;
+    delete line1;
+    delete line2;
+    delete line3;
+}//~seq_alignment()
+@
+
+\subsection {Printing the alignment}
+<<print_alignment>>=
+template <class T>
+void seq_alignment<T>::print_alignment(){
+
+    vector<char>::iterator It;
+
+    cout << min_m+1 << "\t";
+    for (It=line1->begin(); It!=line1->end(); It++)
+        cout << (*It);
+    cout << "\t" << max_m << "\n";
+
+    cout << "\t";
+    for (It=line2->begin(); It!=line2->end(); It++)
+        cout << (*It);
+    cout << "\n";
+
+    cout << min_n+1 << "\t";
+    for (It=line3->begin(); It!=line3->end(); It++)
+        cout << (*It);
+    cout << "\t" <<  max_n << "\n";
+
+    cout << "Alignment total score:" << max_score << "\n";
+
+<<debug_random>>
+}//end print_alignment()
+@
+
+\subsection {Classic algorithms implementation}
+\subsubsection {Needleman-Wunsch algorithm implementation}
+<<nw_align>>=
+template <class T>
+void seq_alignment<T>::nw_align(){
+    
+    //allocating matrix space
+    try {
+        N=new boost::multi_array< T, 2>(boost::extents[m+1][n+1]);
+    }
+    catch(const bad_alloc& x){
+        cerr << "Out of memory in nw_align(): " << x.what() << "\n";
+        abort();
+    }
+    //reinizialize min_m min_n max_m max_n max_score
+    min_m=0; max_m=m; min_n=0; max_n=n;
+    max_score=NEG_INFTY;
+
+    (*N)[0][0]=(T)0;
+
+    for (int j=1;j<=n;j++){
+        (*N)[0][j]=-j*gap_cost;
+    }
+
+    for (int i=0;i<m;i++){
+        int next_i=i+1;
+        (*N)[next_i][0]=(*N)[i][0]-gap_cost;
+        for (int j=0;j<n;j++){
+            int next_j=j+1;
+            (*N)[next_i][next_j]=max(max((*N)[i][j]+c_matrix->get_score((*A)[i],
+                                                                       (*B)[j]),
+                                         (*N)[i][next_j]-gap_cost),
+                                    (*N)[next_i][j]-gap_cost);
+        }
+    }
+
+    max_score=(*N)[m][n];
+
+    //cleaning an eventual precalculated alignment
+    (*line1).clear();
+    (*line2).clear();
+    (*line3).clear();
+    build_alignment(max_m, max_n);
+
+<<memory_line>>
+
+    delete N;
+}//end nw_align()
+@
+
+\subsubsection {Smith-Waterman algorithm implementation}
+<<sw_align>>=
+template <class T>
+void seq_alignment<T>::sw_align(){
+    
+    //allocating matrix space
+    try{
+        N=new boost::multi_array< T, 2>(boost::extents[m+1][n+1]);
+    }
+    catch(const bad_alloc& x){
+        cerr << "Out of memory in sw_align(): " << x.what() << "\n";
+        abort();
+    }
+    //reinizialize min_m min_n max_m max_n max_score
+    min_m=0; max_m=m; min_n=0; max_n=n;
+    max_score=0;
+
+    for (int i=0;i<=m;i++)
+        (*N)[i][0]=(T)0;
+    for (int j=0;j<=n;j++)
+        (*N)[0][j]=(T)0;
+
+    for (int i=0;i<m;i++){
+        int next_i=i+1;
+        for (int j=0;j<n;j++){
+         int next_j=j+1;
+        (*N)[next_i][next_j]=max(max(max((*N)[i][j]+c_matrix->get_score((*A)[i],
+                                                                       (*B)[j]),
+                                         (*N)[i][next_j]-gap_cost),
+                                     (*N)[next_i][j]-gap_cost),
+                                 (T)0);
+            if((*N)[next_i][next_j]>(*N)[max_m][max_n]){
+                max_m=next_i;
+                max_n=next_j;
+            }
+        }
+    }
+
+    max_score=(*N)[max_m][max_n];
+
+    //cleaning an eventual precalculated alignment
+    (*line1).clear();
+    (*line2).clear();
+    (*line3).clear();
+    if (max_score>0)
+        build_alignment(max_m, max_n);
+    else
+        max_score=0;
+
+<<memory_line>>
+
+    delete N;
+}//end sw_align()
+@
+
+\subsubsection {Tracking back the alignment}
+<<build_alignment>>=
+template <class T>
+void seq_alignment<T>::build_alignment(int i, int j){
+    int prev_i=i-1;
+    int prev_j=j-1;
+
+    if((i>0) && (j>0) &&
+        ((*N)[i][j]==((*N)[prev_i][prev_j]+c_matrix->get_score((*A)[prev_i],
+                                                               (*B)[prev_j])))){
+        build_alignment(prev_i, prev_j);
+        line1->push_back((*A)[prev_i]);
+        if((*A)[prev_i]==(*B)[prev_j])//matching
+            line2->push_back('|');
+        else
+            line2->push_back('X');
+        line3->push_back((*B)[prev_j]);
+        return;
+    }
+    if((i>0) && ((*N)[i][j]==((*N)[prev_i][j]-gap_cost)) ){
+        build_alignment(prev_i,j);
+        line1->push_back((*A)[prev_i]);
+        line2->push_back(' ');
+        line3->push_back('-');
+        return;
+    }
+    if((j>0) && ((*N)[i][j]==((*N)[i][prev_j]-gap_cost)) ){
+        build_alignment(i,prev_j);
+        line1->push_back('-');
+        line2->push_back(' ');
+        line3->push_back((*B)[prev_j]);
+        return;
+    }
+
+    min_m=i;
+    min_n=j;
+}//end build_alignment(int, int)
+@
+
+\subsection {Aligning using affine gap penalties}
+
+\subsubsection {Global alignment implementation}
+<<nw_affine_align>>=
+template <class T>
+void seq_alignment<T>::nw_affine_align(){
+
+    //allocating matrix space
+    try{
+        M=new boost::multi_array< T, 3>(boost::extents[m+1][n+1][4]);
+    }
+    catch(const bad_alloc& x){
+        cerr << "Out of memory in nw_affine_align(): " << x.what() << "\n";
+        abort();
+    }
+    //reinizialize min_m min_n max_m max_n max_score
+    min_m=0; max_m=m; min_n=0; max_n=n;
+    max_score=NEG_INFTY;
+
+    //preparing first line of the 4 matrix
+    (*M)[0][0][0]=(T)0;
+    (*M)[0][0][1]=NEG_INFTY;
+    (*M)[0][0][2]=NEG_INFTY;
+    (*M)[0][0][3]=(T)3;//STOP HERE
+
+    for (int j=0;j<n;j++){
+        int next_j=j+1;
+        (*M)[0][next_j][0]=-(gap_cost+j*extend_gap_cost);
+        (*M)[0][next_j][1]=NEG_INFTY;
+        (*M)[0][next_j][2]=-(gap_cost+j*extend_gap_cost);
+        (*M)[0][next_j][3]=(T)2;//LEFT
+    }
+
+    for (int i=0;i<m;i++){
+        int next_i=i+1;
+        //preparing first column of the 4 matrix
+        (*M)[next_i][0][0]=-(gap_cost+i*extend_gap_cost);
+        (*M)[next_i][0][1]=-(gap_cost+i*extend_gap_cost);
+        (*M)[next_i][0][2]=NEG_INFTY;
+        (*M)[next_i][0][3]=(T)1;//UP
+
+        for (int j=0;j<n;j++){
+            int next_j=j+1;
+            <<affine elaboration>>
+        }
+    }
+
+    max_score=(*M)[m][n][0];
+
+    //cleaning an eventual precalculated alignment
+    (*line1).clear();
+    (*line2).clear();
+    (*line3).clear();
+    build_affine_alignment(m, n);
+
+<<memory_line>>
+
+    delete M;
+}//end nw_affine_align()
+@
+
+\subsubsection {Local alignment implementation}
+<<sw_affine_align>>=
+template <class T>
+void seq_alignment<T>::sw_affine_align(){
+
+    //allocating matrix space
+    try{
+        M=new boost::multi_array< T, 3>(boost::extents[m+1][n+1][4]);
+    }
+    catch(const bad_alloc& x){
+        cerr << "Out of memory in sw_affine_align(): " << x.what() << "\n";
+        abort();
+    }
+    //reinizialize min_m min_n max_m max_n max_score
+    min_m=0; max_m=m; min_n=0; max_n=n;
+    max_score=0;
+
+    //preparing first row of the 4 matrix
+    (*M)[0][0][0]=(T)0;
+    (*M)[0][0][1]=NEG_INFTY;
+    (*M)[0][0][2]=NEG_INFTY;
+    (*M)[0][0][3]=(T)3;//STOP HERE
+
+    for (int j=0;j<n;j++){
+        int next_j=j+1;
+        (*M)[0][next_j][0]=(T)0;
+        (*M)[0][next_j][1]=NEG_INFTY;
+        (*M)[0][next_j][2]=-(gap_cost+j*extend_gap_cost);
+        (*M)[0][next_j][3]=(T)3;//STOP HERE
+    }
+
+    for (int i=0;i<m;i++){
+        int next_i=i+1;
+        //preparing first column of the 4 matrix
+        (*M)[next_i][0][0]=(T)0;
+        (*M)[next_i][0][1]=-(gap_cost+i*extend_gap_cost);
+        (*M)[next_i][0][2]=NEG_INFTY;
+        (*M)[next_i][0][3]=(T)3;//STOP HERE
+
+        for (int j=0;j<n;j++){
+            int next_j=j+1;
+            <<affine elaboration>>
+
+            if((T)0>(*M)[next_i][next_j][0]){
+                (*M)[next_i][next_j][0]=(T)0;
+                (*M)[next_i][next_j][3]=(T)3;//STOP HERE
+            }
+
+            if((*M)[next_i][next_j][0]>max_score){
+                max_score=(*M)[next_i][next_j][0];
+                max_m=next_i;
+                max_n=next_j;
+            }
+        }
+    }
+
+    //cleaning an eventual precalculated alignment
+    (*line1).clear();
+    (*line2).clear();
+    (*line3).clear();
+    if (max_score>0)
+        build_affine_alignment(max_m, max_n);
+    else
+        max_score=0;
+
+<<memory_line>>
+
+    delete M;
+}//end sw_affine_align()
+@
+
+\subsubsection {Semiglobal alignment implementation}
+<<semiglobal_affine_align>>=
+template <class T>
+void seq_alignment<T>::semiglobal_affine_align(){
+
+    //allocating matrix space
+    try{
+        M=new boost::multi_array< T, 3>(boost::extents[m+1][n+1][4]);
+    }
+    catch(const bad_alloc& x){
+        cerr <<"Out of memory in semiglobal_affine_align(): "<<x.what() << "\n";
+        abort();
+    }
+    //reinizialize min_m min_n max_m max_n max_score
+    min_m=0; max_m=m; min_n=0; max_n=n;
+    max_score=0;
+
+    //preparing first row of the 4 matrix
+    (*M)[0][0][0]=(T)0;
+    (*M)[0][0][1]=NEG_INFTY;
+    (*M)[0][0][2]=NEG_INFTY;
+    (*M)[0][0][3]=(T)3;
+
+    for (int j=0;j<n;j++){
+        int next_j=j+1;
+        (*M)[0][next_j][0]=(T)0;
+        (*M)[0][next_j][1]=NEG_INFTY;
+        (*M)[0][next_j][2]=-(gap_cost+j*extend_gap_cost);
+        (*M)[0][next_j][3]=(T)3;//STOP HERE
+    }
+
+    for (int i=0;i<m;i++){
+        int next_i=i+1;
+        //preparing first column of the 4 matrix
+        (*M)[next_i][0][0]=(T)0;
+        (*M)[next_i][0][1]=-(gap_cost+i*extend_gap_cost);
+        (*M)[next_i][0][2]=NEG_INFTY;
+        (*M)[next_i][0][3]=(T)3;//STOP HERE
+
+        for (int j=0;j<n;j++){
+            int next_j=j+1;
+            <<affine elaboration>>
+        }
+    }
+
+    for (int i=1;i<=m;i++)
+        if((*M)[i][n][0]>max_score){
+            max_score=(*M)[i][n][0];
+            max_m=i;
+            max_n=n;
+        }
+    for (int j=1;j<=n;j++)
+        if((*M)[m][j][0]>max_score){
+            max_score=(*M)[m][j][0];
+            max_m=m;
+            max_n=j;
+        }
+
+    //cleaning an eventual precalculated alignment
+    (*line1).clear();
+    (*line2).clear();
+    (*line3).clear();
+    if (max_score>0)
+        build_affine_alignment(max_m, max_n);
+    else
+        max_score=0;
+
+<<memory_line>>
+
+    delete M;
+}//end semiglobal_affine_align()
+@
+
+\subsubsection {Matrix elaboration}
+<<affine elaboration>>=
+(*M)[next_i][next_j][0]=(*M)[i][j][0]+c_matrix->get_score((*A)[i],(*B)[j]);
+(*M)[next_i][next_j][1]=max((*M)[i][next_j][0]-gap_cost,
+                            (*M)[i][next_j][1]-extend_gap_cost);
+(*M)[next_i][next_j][2]=max((*M)[next_i][j][0]-gap_cost,
+                            (*M)[next_i][j][2]-extend_gap_cost);
+
+(*M)[next_i][next_j][3]=(T)0;//upleft
+
+if((*M)[next_i][next_j][1]>=(*M)[next_i][next_j][0] &&
+   (*M)[next_i][next_j][1]>=(*M)[next_i][next_j][2]){
+    (*M)[next_i][next_j][0]=(*M)[next_i][next_j][1];
+    (*M)[next_i][next_j][3]=(T)1;//up
+} else if((*M)[next_i][next_j][2]>=(*M)[next_i][next_j][0] &&
+          (*M)[next_i][next_j][2]>(*M)[next_i][next_j][1]){
+    (*M)[next_i][next_j][0]=(*M)[next_i][next_j][2];
+    (*M)[next_i][next_j][3]=(T)2;//left
+}
+@
+
+\subsubsection {Tracking back the alignment}
+<<build_affine_alignment>>=
+template <class T>
+void seq_alignment<T>::build_affine_alignment(int i, int j){
+
+    if (i>0 && j>0 && (*M)[i][j][3]==(T)0){
+        build_affine_alignment(i-1, j-1);
+        line1->push_back((*A)[i-1]);
+        if((*A)[i-1]==(*B)[j-1])//matching
+            line2->push_back('|');
+        else
+            line2->push_back('X');//mismatch
+        line3->push_back((*B)[j-1]);
+
+        return;
+    }
+    if(i>0 && (*M)[i][j][3]==(T)1){//it's the beginning of a gap in A
+        int k=i;
+        while (i>0 && (*M)[i-1][j][1]==(*M)[i][j][1]+extend_gap_cost){
+            i--;//measuring the gap
+        }
+
+        if (i>0)
+            build_affine_alignment(i-1, j);
+
+        while (i<=k){
+            line1->push_back((*A)[i-1]);
+            line2->push_back(' ');
+            line3->push_back('-');
+            i++;
+        }
+
+        return;
+    }
+    if(j>0 && (*M)[i][j][3]==(T)2){//it's the beginning of a gap in B
+        int k=j;
+        while (j>0 && (*M)[i][j-1][2]==(*M)[i][j][2]+extend_gap_cost){
+            j--;//measuring the gap
+        }
+
+        if (j>0)
+            build_affine_alignment(i, j-1);
+
+        while (j<=k){
+            line1->push_back('-');
+            line2->push_back(' ');
+            line3->push_back((*B)[j-1]);
+            j++;
+        }
+
+        return;
+    }
+    if((*M)[i][j][3]==(T)3){
+        min_m=i;
+        min_n=j;
+    }
+}//end build_affine_alignment(int, int)
+@
+
+\subsection {Aligning in linear space}
+
+\subsubsection {Building the alignment using linear space}
+<<build_linear_alignment>>=
+template <class T>
+void seq_alignment<T>::build_linear_alignment(int i1, int j1, int i2, int j2,
+                                        T A_begin_gap_cost, T A_end_gap_cost,
+                                        T B_begin_gap_cost, T B_end_gap_cost){
+    assert(i2 >= i1 && j2 >= j1);
+
+    //best score of the subproblem
+    T best_score=NEG_INFTY;
+
+    //solving the base of the recursion
+    if  (j1==j2){//only gap in A
+        for (int i=i1;i<i2;i++){//gap in the second sequence
+            line1->push_back((*A)[i]);
+            line2->push_back(' ');
+            line3->push_back('-');
+        }
+
+        if((i1==0) && (j1==0) && (i2==m) && (j2==n))
+            max_score=-(gap_cost+(m-1)*extend_gap_cost);
+        
+        return;
+    }
+    if  (i1==i2){//only gap in B
+        for (int j=j1;j<j2;j++){//gap in the second sequence
+            line1->push_back('-');
+            line2->push_back(' ');
+            line3->push_back((*B)[j]);
+        }
+
+        if((i1==0) && (j1==0) && (i2==m) && (j2==n))
+            max_score=-(gap_cost+(n-1)*extend_gap_cost);
+        
+        return;
+    }
+
+    int mid=(i1+i2)/2;//mid line
+
+//computing maximum path scores form (i1,j1) to (mid,*)
+    //preparing first line of the 4 matrix (gap in B)
+    (*M)[i1%2][j1][0]=(T)0;
+    (*M)[i1%2][j1][1]=NEG_INFTY;
+    (*M)[i1%2][j1][2]=NEG_INFTY;
+    (*M)[i1%2][j1][3]=(T)0;
+
+    for (int j=j1;j<j2;j++){
+        int next_j=j+1;
+        (*M)[i1%2][next_j][0]=-(A_begin_gap_cost+(j-j1)*extend_gap_cost);
+        (*M)[i1%2][next_j][1]=NEG_INFTY;
+        (*M)[i1%2][next_j][2]=-(A_begin_gap_cost+(j-j1)*extend_gap_cost);
+        (*M)[i1%2][next_j][3]=(T)2;//left
+    }
+
+    for (int i=i1; i<=mid; i++){
+
+        //precalc i+1 assuring to use only 2 lines
+
+        int next_i=(i+1)%2;
+        //calculating the first column (gap in B)
+        (*M)[next_i][j1][0]=-(B_begin_gap_cost+(i-i1)*extend_gap_cost);
+        (*M)[next_i][j1][1]=-(B_begin_gap_cost+(i-i1)*extend_gap_cost);
+        (*M)[next_i][j1][2]=NEG_INFTY;
+        (*M)[next_i][j1][3]=(T)1;//up
+
+        for (int j=j1;j<j2;j++){
+            int next_j=j+1;
+            (*M)[next_i][next_j][0]=(*M)[i%2][j][0]+
+                                c_matrix->get_score((*A)[i],(*B)[j]);
+            (*M)[next_i][next_j][1]=max((*M)[i%2][next_j][0]-gap_cost,
+                                    (*M)[i%2][next_j][1]-extend_gap_cost);
+            (*M)[next_i][next_j][2]=max((*M)[next_i][j][0]-gap_cost,
+                                    (*M)[next_i][j][2]-extend_gap_cost);
+
+            (*M)[next_i][next_j][3]=(T)0;//upleft
+
+            if((*M)[next_i][next_j][1]>=(*M)[next_i][next_j][0] &&
+               (*M)[next_i][next_j][1]>=(*M)[next_i][next_j][2]){
+                (*M)[next_i][next_j][0]=(*M)[next_i][next_j][1];
+                (*M)[next_i][next_j][3]=(T)1;//up
+            } else if((*M)[next_i][next_j][2]>=(*M)[next_i][next_j][0] &&
+                      (*M)[next_i][next_j][2]>(*M)[next_i][next_j][1]){
+                (*M)[next_i][next_j][0]=(*M)[next_i][next_j][2];
+                (*M)[next_i][next_j][3]=(T)2;//left
+            }
+        }
+    }
+
+//computing maximum path scores from (i2,j2) down to (mid,*)
+    //preparing first line of the 4 matrix (gap in B)
+    (*M1)[i2%2][j2][0]=(T)0;
+    (*M1)[i2%2][j2][1]=NEG_INFTY;
+    (*M1)[i2%2][j2][2]=NEG_INFTY;
+    (*M1)[i2%2][j2][3]=(T)0;//STOP HERE
+
+    for (int j=j2;j>j1;j--){
+        int prev_j=j-1;
+        (*M1)[i2%2][prev_j][0]=-(A_end_gap_cost+(j2-j)*extend_gap_cost);
+        (*M1)[i2%2][prev_j][1]=NEG_INFTY;
+        (*M1)[i2%2][prev_j][2]=-(A_end_gap_cost+(j2-j)*extend_gap_cost);
+        (*M1)[i2%2][prev_j][3]=(T)2;//right
+    }
+
+    for (int i=i2; i>mid; i--){
+        //precalc i-1 assuring to use only 2 lines
+        int prev_i=(i-1)%2;
+
+        //calculating the first column (gap in B)
+        (*M1)[prev_i][j2][0]=-(B_end_gap_cost+(i2-i)*extend_gap_cost);
+        (*M1)[prev_i][j2][1]=-(B_end_gap_cost+(i2-i)*extend_gap_cost);
+        (*M1)[prev_i][j2][2]=NEG_INFTY;
+        (*M1)[prev_i][j2][3]=(T)1;//down
+
+        for (int j=j2;j>j1;j--){
+            int prev_j=j-1;
+            (*M1)[prev_i][prev_j][0]=(*M1)[i%2][j][0]+
+                                c_matrix->get_score((*A)[i-1],(*B)[prev_j]);
+            (*M1)[prev_i][prev_j][1]=max((*M1)[i%2][prev_j][0]-gap_cost,
+                                    (*M1)[i%2][prev_j][1]-extend_gap_cost);
+            (*M1)[prev_i][prev_j][2]=max((*M1)[prev_i][j][0]-gap_cost,
+                                      (*M1)[prev_i][j][2]-extend_gap_cost);
+
+            (*M1)[prev_i][prev_j][3]=(T)0;//downright
+
+            if((*M1)[prev_i][prev_j][1]>=(*M1)[prev_i][prev_j][0] &&
+               (*M1)[prev_i][prev_j][1]>=(*M1)[prev_i][prev_j][2]){
+                (*M1)[prev_i][prev_j][0]=(*M1)[prev_i][prev_j][1];
+                (*M1)[prev_i][prev_j][3]=(T)1;//down
+            }else if ((*M1)[prev_i][prev_j][2]>=(*M1)[prev_i][prev_j][0] &&
+                      (*M1)[prev_i][prev_j][2]>(*M1)[prev_i][prev_j][1]){
+                (*M1)[prev_i][prev_j][0]=(*M1)[prev_i][prev_j][2];
+                (*M1)[prev_i][prev_j][3]=(T)2;//right
+            }
+        }
+    }
+
+    //finding a midpoint of the global alignment
+
+    //position of the best score
+    int best_score_pos=j1;
+
+    for (int j=j1;j<=j2;j++){
+        T sum=((*M)[mid%2][j][0]+(*M1)[mid%2][j][0]);
+
+        //if 2 gaps are in the same direction we must reduce the penalty
+        sum=max(sum,
+                (*M)[mid%2][j][1]+(*M1)[mid%2][j][1]+gap_cost-extend_gap_cost);
+        sum=max(sum,
+                (*M)[mid%2][j][2]+(*M1)[mid%2][j][2]+gap_cost-extend_gap_cost);
+        //find the best j
+        if(sum>best_score){
+            best_score_pos=j;
+            best_score=sum;
+        }
+    }
+
+    //in the first recursion we archive the best global score in max_score
+    if((i1==0) && (j1==0) && (i2==m) && (j2==n) && (best_score>max_score))
+        max_score=best_score;
+
+    //only one char left on seq A
+    if(i2-i1==1){
+        if ((*M)[i2%2][j2][3]==(T)0){
+            build_linear_alignment(i1, j1, i2-1, j2-1,
+                                   A_begin_gap_cost,A_end_gap_cost,
+                                   B_begin_gap_cost,B_end_gap_cost);
+
+            line1->push_back((*A)[i2-1]);
+            if((*A)[i2-1]==(*B)[j2-1])//matching
+               line2->push_back('|');
+            else
+                line2->push_back('X');//mismatch
+            line3->push_back((*B)[j2-1]);
+            return;
+        }
+        if((*M)[i2%2][j2][3]==(T)1){//print the char in A
+                build_linear_alignment(i1, j1, i2-1, j2,
+                                   A_begin_gap_cost,A_end_gap_cost,
+                                   B_begin_gap_cost,B_end_gap_cost);
+
+                line1->push_back((*A)[i2-1]);
+                line2->push_back(' ');
+                line3->push_back('-');
+            return;
+        }
+        if((*M)[i2%2][j2][3]==(T)2){//it's the beginning of a gap in A
+            int k=j2;
+            while(j2>j1 && (*M)[i2%2][j2-1][2]==(*M)[i2%2][j2][2]
+                                                              +extend_gap_cost){
+                j2--;//measuring the gap
+            }
+
+            if (j2>j1)
+                build_linear_alignment(i1, j1, i2, j2-1,
+                                   A_begin_gap_cost,A_end_gap_cost,
+                                   B_begin_gap_cost,B_end_gap_cost);
+
+            while (j2<=k){
+                line1->push_back('-');
+                line2->push_back(' ');
+                line3->push_back((*B)[j2-1]);
+                j2++;
+            }
+
+            return;
+        }
+
+        if(m==1)//A had only 1 char
+            max_score=(*M)[i2%2][j2][0];
+
+        return;
+    }
+
+//operate on the 2 halves
+    //if the pivot is in the middle of a long gap we divide in 3 parts
+    //long gap in B
+    if (best_score==(*M)[mid%2][best_score_pos][1]+
+                    (*M1)[mid%2][best_score_pos][1]+
+                    gap_cost-extend_gap_cost){
+
+        build_linear_alignment(i1,j1,mid-1,best_score_pos,
+                               A_begin_gap_cost,A_end_gap_cost,
+                               B_begin_gap_cost,extend_gap_cost);
+
+        line1->push_back((*A)[mid-1]);
+        line2->push_back(' ');
+        line3->push_back('-');
+        line1->push_back((*A)[mid]);
+        line2->push_back(' ');
+        line3->push_back('-');
+
+        build_linear_alignment(mid+1,best_score_pos,i2,j2,
+                               A_begin_gap_cost,A_end_gap_cost,
+                               extend_gap_cost,B_end_gap_cost);
+        return;
+    }
+    //long gap in A
+    if (best_score==(*M)[mid%2][best_score_pos][2]+
+                    (*M1)[mid%2][best_score_pos][2]+
+                    gap_cost-extend_gap_cost){
+        build_linear_alignment(i1,j1,mid,best_score_pos-1,
+                               A_begin_gap_cost,extend_gap_cost,
+                               B_begin_gap_cost,B_end_gap_cost);
+
+        line1->push_back('-');
+        line2->push_back(' ');
+        line3->push_back((*B)[best_score_pos-1]);
+        line1->push_back('-');
+        line2->push_back(' ');
+        line3->push_back((*B)[best_score_pos]);
+
+        build_linear_alignment(mid,best_score_pos+1,i2,j2,
+                               extend_gap_cost,A_end_gap_cost,
+                               B_begin_gap_cost,B_end_gap_cost);
+        return;
+    }
+
+    build_linear_alignment(i1,j1,mid,best_score_pos,
+                           A_begin_gap_cost,gap_cost,B_begin_gap_cost,gap_cost);
+    build_linear_alignment(mid,best_score_pos,i2,j2,
+                           gap_cost,A_end_gap_cost,gap_cost,B_end_gap_cost);
+    
+}//end build_linear_alignment()
+@
+
+\subsubsection {Global alignment}
+<<nw_linear_align>>=
+template <class T>
+void seq_alignment<T>::nw_linear_align(){
+
+    //Allocating needed space
+    try{
+        M=new boost::multi_array< T, 3>(boost::extents[2][n+1][4]);
+        M1=new boost::multi_array< T, 3>(boost::extents[2][n+1][4]);
+    }
+    catch(const bad_alloc& x){
+        cerr << "Out of memory in nw_linear_align(): " << x.what() << "\n";
+        abort();
+    }
+    //reinizialize min_m min_n max_m max_n max_score
+    min_m=0; max_m=m; min_n=0; max_n=n;
+    max_score=NEG_INFTY;
+
+    //cleaning an eventual precalculated alignment
+    (*line1).clear();
+    (*line2).clear();
+    (*line3).clear();
+
+    if (m>0||n>0)
+        build_linear_alignment(0,0,m,n,gap_cost,gap_cost,gap_cost,gap_cost);
+    else max_score=0;//both sequences empty
+
+<<memory_line>>
+
+    delete M;
+    delete M1;
+}
+@
+
+\subsubsection {Local alignment}
+<<sw_linear_align>>=
+template <class T>
+void seq_alignment<T>::sw_linear_align(){
+    //Allocating needed space
+    try{
+        M=new boost::multi_array< T, 3>(boost::extents[2][n+1][4]);
+        M1=new boost::multi_array< T, 3>(boost::extents[2][n+1][4]);
+    }
+    catch(const bad_alloc& x){
+        cerr << "Out of memory in sw_linear_align(): " << x.what() << "\n";
+        abort();
+    }
+    //reinizialize min_m min_n max_m max_n max_score
+    min_m=0; max_m=m; min_n=0; max_n=n;
+    max_score=0;
+
+//determining max_m max_n with an upward cost only alignment
+    //preparing first line of the 4 matrix
+    (*M)[0][0][0]=(T)0;
+    (*M)[0][0][1]=NEG_INFTY;
+    (*M)[0][0][2]=NEG_INFTY;
+    
+    for (int j=0;j<n;j++){
+        int next_j=j+1;
+        (*M)[0][next_j][0]=(T)0;
+        (*M)[0][next_j][1]=NEG_INFTY;
+        (*M)[0][next_j][2]=-(gap_cost+j*extend_gap_cost);
+    }
+
+    for (int i=0; i<m; i++){
+        //precalc i+1
+        int next_i=(i+1)%2;
+
+        //calculating the first column
+        (*M)[next_i][0][0]=(T)0;
+        (*M)[next_i][0][1]=-(gap_cost+i*extend_gap_cost);
+        (*M)[next_i][0][2]=NEG_INFTY;
+
+        for (int j=0;j<n;j++){
+            int next_j=j+1;
+            (*M)[next_i][next_j][0]=(*M)[i%2][j][0]+
+                                c_matrix->get_score((*A)[i],(*B)[j]);
+            (*M)[next_i][next_j][1]=max((*M)[i%2][next_j][0]-gap_cost,
+                                    (*M)[i%2][next_j][1]-extend_gap_cost);
+            (*M)[next_i][next_j][2]=max((*M)[next_i][j][0]-gap_cost,
+                                    (*M)[next_i][j][2]-extend_gap_cost);
+
+            if((*M)[next_i][next_j][0]>(*M)[next_i][next_j][1] &&
+               (*M)[next_i][next_j][0]>(*M)[next_i][next_j][2]){
+            } else if((*M)[next_i][next_j][1]>(*M)[next_i][next_j][2]){
+                (*M)[next_i][next_j][0]=(*M)[next_i][next_j][1];
+            } else {
+                (*M)[next_i][next_j][0]=(*M)[next_i][next_j][2];
+            }
+
+            if(0>(*M)[next_i][next_j][0]){
+                (*M)[next_i][next_j][0]=(T)0;
+            }
+
+            if((*M)[next_i][next_j][0]>max_score){
+                max_m=i+1;
+                max_n=next_j;
+                max_score=(*M)[next_i][next_j][0];
+            }
+        }
+    }
+
+//determining min_m min_n with a backward cost only alignment
+    //preparing first line of the 4 matrix
+    (*M1)[max_m%2][max_n][0]=(T)0;
+    (*M1)[max_m%2][max_n][1]=NEG_INFTY;
+    (*M1)[max_m%2][max_n][2]=NEG_INFTY;
+
+    for (int j=max_n;j>0;j--){
+        int prev_j=j-1;
+        (*M1)[max_m%2][prev_j][0]=(T)0;
+        (*M1)[max_m%2][prev_j][1]=NEG_INFTY;
+        (*M1)[max_m%2][prev_j][2]=-(gap_cost+(max_n-j)*extend_gap_cost);
+    }
+
+    for (int i=max_m; i>0; i--){
+        //precalc i+1
+        int prev_i=(i-1)%2;
+
+        //calculating the first column
+        (*M1)[prev_i][max_n][0]=(T)0;
+        (*M1)[prev_i][max_n][1]=-(gap_cost+(max_m-i)*extend_gap_cost);
+        (*M1)[prev_i][max_n][2]=NEG_INFTY;
+
+        for (int j=max_n;j>0;j--){
+            int prev_j=j-1;
+            (*M1)[prev_i][prev_j][0]=(*M1)[i%2][j][0]+
+                                  c_matrix->get_score((*A)[i-1],(*B)[prev_j]);
+            (*M1)[prev_i][prev_j][1]=max((*M1)[i%2][prev_j][0]-gap_cost,
+                                      (*M1)[i%2][prev_j][1]-extend_gap_cost);
+            (*M1)[prev_i][prev_j][2]=max((*M1)[prev_i][j][0]-gap_cost,
+                                      (*M1)[prev_i][j][2]-extend_gap_cost);
+
+            if((*M1)[prev_i][prev_j][0]>(*M1)[prev_i][prev_j][1] &&
+               (*M1)[prev_i][prev_j][0]>(*M1)[prev_i][prev_j][2]){
+            } else if((*M1)[prev_i][prev_j][1]>(*M1)[prev_i][prev_j][2]){
+                (*M1)[prev_i][prev_j][0]=(*M1)[prev_i][prev_j][1];
+            } else {
+                (*M1)[prev_i][prev_j][0]=(*M1)[prev_i][prev_j][2];
+            }
+
+            if((*M1)[prev_i][prev_j][0]==max_score){
+                min_m=i-1;
+                min_n=prev_j;
+            }
+        }
+    }
+
+    //cleaning an eventual precalculated alignment
+    (*line1).clear();
+    (*line2).clear();
+    (*line3).clear();
+    //if first string empty
+    if (max_score>0) 
+        build_linear_alignment(min_m,min_n,max_m,max_n,
+                               gap_cost,gap_cost,gap_cost,gap_cost);
+    else
+        max_score=(T)0;
+
+<<memory_line>>
+
+    delete M;
+    delete M1;
+}//end sw_linear_align_align()
+@
+
+\subsubsection {Semiglobal alignment}
+<<semiglobal_linear_align>>=
+template <class T>
+void seq_alignment<T>::semiglobal_linear_align(){
+    //Allocating needed space
+    try{
+        M=new boost::multi_array< T, 3>(boost::extents[2][n+1][4]);
+        M1=new boost::multi_array< T, 3>(boost::extents[2][n+1][4]);
+    }
+    catch(const bad_alloc& x){
+        cerr<< "Out of memory in semiglobal_linear_align(): "<< x.what()<<"\n";
+        abort();
+    }
+    //reinizialize min_m min_n max_m max_n max_score
+    min_m=0; max_m=m; min_n=0; max_n=n;
+    max_score=0;
+
+//determining max_m max_n with an upward, cost only, alignment
+    //preparing first line of the 4 matrix
+    (*M)[0][0][0]=(T)0;
+    (*M)[0][0][1]=NEG_INFTY;
+    (*M)[0][0][2]=NEG_INFTY;
+
+    for (int j=0;j<n;j++){
+        int next_j=j+1;
+        (*M)[0][next_j][0]=(T)0;
+        (*M)[0][next_j][1]=NEG_INFTY;
+        (*M)[0][next_j][2]=-(gap_cost+j*extend_gap_cost);
+    }
+
+    for (int i=0; i<m; i++){
+        //precalc i+1
+        int next_i=(i+1)%2;
+
+        //calculating the first column
+        (*M)[next_i][0][0]=(T)0;
+        (*M)[next_i][0][1]=-(gap_cost+i*extend_gap_cost);
+        (*M)[next_i][0][2]=NEG_INFTY;
+
+        for (int j=0;j<n;j++){
+            int next_j=j+1;
+            (*M)[next_i][next_j][0]=(*M)[i%2][j][0]+
+                                c_matrix->get_score((*A)[i],(*B)[j]);
+            (*M)[next_i][next_j][1]=max((*M)[i%2][next_j][0]-gap_cost,
+                                    (*M)[i%2][next_j][1]-extend_gap_cost);
+            (*M)[next_i][next_j][2]=max((*M)[next_i][j][0]-gap_cost,
+                                    (*M)[next_i][j][2]-extend_gap_cost);
+
+            if((*M)[next_i][next_j][1]>=(*M)[next_i][next_j][0] &&
+               (*M)[next_i][next_j][1]>=(*M)[next_i][next_j][2]){
+                (*M)[next_i][next_j][0]=(*M)[next_i][next_j][1];
+            } else if((*M)[next_i][next_j][2]>=(*M)[next_i][next_j][0] &&
+                      (*M)[next_i][next_j][2]>(*M)[next_i][next_j][1]){
+                (*M)[next_i][next_j][0]=(*M)[next_i][next_j][2];
+            }
+
+            if((i+1==m || next_j==n) && (*M)[next_i][next_j][0]>max_score){
+                max_m=i+1;
+                max_n=next_j;
+                max_score=(*M)[next_i][next_j][0];
+            }
+        }
+    }
+
+//determining min_m min_n with a backward, cost only, alignment
+    //preparing first line of the 4 matrix
+    (*M1)[max_m%2][max_n][0]=(T)0;
+    (*M1)[max_m%2][max_n][1]=NEG_INFTY;
+    (*M1)[max_m%2][max_n][2]=NEG_INFTY;
+
+    for (int j=max_n;j>0;j--){
+        int prev_j=j-1;
+        (*M1)[max_m%2][prev_j][0]=-(gap_cost+(max_n-j)*extend_gap_cost);
+        (*M1)[max_m%2][prev_j][1]=NEG_INFTY;
+        (*M1)[max_m%2][prev_j][2]=-(gap_cost+(max_n-j)*extend_gap_cost);
+    }
+
+    for (int i=max_m; i>0; i--){
+        //precalc i+1
+        int prev_i=(i-1)%2;
+
+        //calculating the first column
+        (*M1)[prev_i][max_n][0]=-(gap_cost+(max_m-i)*extend_gap_cost);
+        (*M1)[prev_i][max_n][1]=-(gap_cost+(max_m-i)*extend_gap_cost);
+        (*M1)[prev_i][max_n][2]=NEG_INFTY;
+
+        for (int j=max_n;j>0;j--){
+            int prev_j=j-1;
+            (*M1)[prev_i][prev_j][0]=(*M1)[i%2][j][0]+
+                                  c_matrix->get_score((*A)[i-1],(*B)[prev_j]);
+            (*M1)[prev_i][prev_j][1]=max((*M1)[i%2][prev_j][0]-gap_cost,
+                                      (*M1)[i%2][prev_j][1]-extend_gap_cost);
+            (*M1)[prev_i][prev_j][2]=max((*M1)[prev_i][j][0]-gap_cost,
+                                      (*M1)[prev_i][j][2]-extend_gap_cost);
+
+            if((*M1)[prev_i][prev_j][1]>=(*M1)[prev_i][prev_j][0] &&
+               (*M1)[prev_i][prev_j][1]>=(*M1)[prev_i][prev_j][2] ){
+                (*M1)[prev_i][prev_j][0]=(*M1)[prev_i][prev_j][1];
+            } else if((*M1)[prev_i][prev_j][2]>=(*M1)[prev_i][prev_j][0] &&
+                     (*M1)[prev_i][prev_j][2]>(*M1)[prev_i][prev_j][1]){
+                (*M1)[prev_i][prev_j][0]=(*M1)[prev_i][prev_j][2];
+            }
+
+            if((i-1==0 || prev_j==0 ) &&
+               ((*M1)[prev_i][prev_j][0]==max_score)){
+                min_m=i-1;
+                min_n=prev_j;
+                break; //the first found is OK
+            }
+        }
+    }
+
+    //cleaning an eventual precalculated alignment
+    (*line1).clear();
+    (*line2).clear();
+    (*line3).clear();
+
+     if (max_score>0)
+        build_linear_alignment(min_m,min_n,max_m,max_n,
+                               gap_cost,gap_cost,gap_cost,gap_cost);
+    else
+        max_score=(T)0;
+
+<<memory_line>>
+
+    delete M;
+    delete M1;
+}//end semiglobal_linear_align()
+@
+
+\chapter{Examples}
+The following example program can be used as a quick tutorial on how the alingment functions can be used in conjunction with other [[ALiBio]] parts: let's start declaring an [[alibio::alphabet]] and adding symbols to it:
+<<two_sequence_example.cpp>>=
+<<licence>>
+
+#include <iostream>
+#include <stdlib.h>
+#include <alibio/two_sequence.hpp>
+
+int main(){
+    //declaring an alphabet for DNA
+    alibio::alphabet dna("DNA");
+
+    //adding symbols to the alphabet
+    dna.add_symbol(alibio::symbol('a',"Adenine"));
+    dna.add_symbol(alibio::symbol('c',"Citosine"));
+    dna.add_symbol(alibio::symbol('t',"Thymine"));
+    dna.add_symbol(alibio::symbol('g',"Guanine"));
+@
+Then we create two [[alibio::sequence]] objects and assign to their primary structures the [[alibio::alphabet]] just created and two strings based on it:
+<<two_sequence_example.cpp>>=
+    //declaring 2 sequences with "bio_string" class as primary structure and
+    //"empty" class as secondary and tertiary structures
+    alibio::sequence<alibio::bio_string,alibio::empty,alibio::empty> seq_one;
+    alibio::sequence<alibio::bio_string,alibio::empty,alibio::empty> seq_two;
+
+    //setting the alphabet (working on "seq_one.primary")
+    seq_one.primary.set_alphabet(dna);
+    seq_two.primary.set_alphabet(dna);
+
+    //setting the sequence (working on "seq_one.primary")
+    seq_one.primary.set_sequence("ATTAGCATTAGACT");
+
+    //setting the sequence (working on "seq_two.primary")
+    seq_two.primary.set_sequence("GCCGTCTTC");
+@
+We need to create a [[<<score_matrix>>]] object constructing it from the same alpabeth, now we can modify the scores as we like: by category (match \ref{def-match}, mismatch \ref{def-mismatch}, gap \ref{def-gap}) or by specifying a  specific char couple:
+<<two_sequence_example.cpp>>=
+    alibio::score_matrix<float> myscores(dna);
+
+    //modifying the score_matrix
+    myscores.set_match_score(5);
+    myscores.set_mismatch_score(-4);
+    //modifying the score_matrix
+    myscores.set_gap_cost(5,0.5);
+    //modifying the score more selectively
+    myscores.set_cost('A','T',5);    
+    //printing the score_matrix
+    myscores.print();
+    //creating alignment object
+    alibio::seq_alignment<float> my_alignment(myscores,
+                                              seq_one.primary, seq_two.primary);
+
+@
+Finally we can call the alignment methods and print the generated alignments:
+<<two_sequence_example.cpp>>=
+    cout << "Optimal global alignment (linear gap penalty)\n";
+    my_alignment.nw_align();
+    my_alignment.print_alignment();
+
+    cout << "Optimal local alignment (linear gap penalty)\n";
+    my_alignment.sw_align();
+    my_alignment.print_alignment();
+
+
+    cout << "Optimal global alignment (affine gap penalty)\n";
+    my_alignment.nw_affine_align();
+    my_alignment.print_alignment();
+
+    cout << "Optimal local aligment (affine gap penalty)\n";
+    my_alignment.sw_affine_align();
+    my_alignment.print_alignment();
+
+    cout << "Optimal semiglobal alignment (affine gap penalty)\n";
+    my_alignment.semiglobal_affine_align();
+    my_alignment.print_alignment();
+
+
+    cout << "Optimal global aligment (affine gap penalty - linear space)\n";
+    my_alignment.nw_linear_align();
+    my_alignment.print_alignment();
+
+    cout << "Optimal local aligment (affine gap penalty - linear space)\n";
+    my_alignment.sw_linear_align();
+    my_alignment.print_alignment();
+
+    cout << "Optimal semiglobal aligment (affine gap penalty - linear space)\n";
+    my_alignment.semiglobal_linear_align();
+    my_alignment.print_alignment();
+
+    return 0;
+}
+@
+
+\chapter{Performance}
+This chapter describes how to measure time and space performance of our algorithms,
+it also includes the scripts we used to produce the graphs presented in \autoref{results}.
+
+\section{Generating data}
+The following [[c++]] program generates the files [[time.dat]] and [[space.dat]] which contain
+time and memory used by [[<<nw_align>>]], [[<<nw_affine_align>>]] and
+[[<<nw_linear_align>>]] functions when operating over seqences of increasing length (from 0 to 3000 chars).
+
+To obtain memory data, we need to decomment the following line wich calls the [[UNIX]] command [[ps]] and transforms the result from KBytes to Bytes before writing it on the file [[space.dat]].
+
+The command supposes we compiled the [[<<performance.cpp>>]] source file to [[performance.bin]].
+<<memory_line>>=
+//decomment for memory tests
+/*
+system("echo `/bin/ps --no-header -o vsz -C performance.bin`*1024 |\
+        bc -l >> space.dat");
+//*/
+@
+The program begins declaring some local variable whose meaning is explained in the code comments
+<<performance.cpp>>=
+<<licence>>
+#include <iostream>
+#include <fstream>
+#include <stdlib.h>
+#include <time.h>
+#include <alibio/two_sequence.hpp>
+
+int main(){
+    //number of symbols in the alphabet
+    int alph_size=4;
+    //max length of the sequences
+    int seq_size=3000;
+    //variables for storing time measures
+    time_t start,end;
+    double dif;
+    //output buffer for writing time measures
+    ofstream out_time;
+@
+Then the program generates an alphabet of [[alph_size]] size and deletes the files [[time.dat]] and [[space.dat]] if they exist.
+It also initialize the random number generator with a seed obtained by PC's clock.
+<<performance.cpp>>=
+    //declaring an alphabet
+    alibio::alphabet my_alph("my alphabet");
+    //adding symbols to the alphabet
+    for (int i=0; i<alph_size; i++){
+        my_alph.add_symbol(alibio::symbol('A'+i));
+    }
+    alibio::score_matrix<int> myscores(my_alph);
+
+    if( remove( "time.dat" ) == -1 )
+        perror( "Error deleting file" );
+    if( remove( "space.dat" ) == -1 )
+        perror( "Error deleting file" );
+
+    //Getting internal clock time for random seadinf
+    srand(time(0));
+@
+The program then generates randomly the sequences and calls the alignment functions on them printing the used time on [[time.dat]] while the decommented [[<<memory_line>>]] prints memory usage on [[space.dat]].
+Everything is repeated until sequence size equals [[seq_size]].
+<<performance.cpp>>=
+    for (int n=0;n<=seq_size;n+=1000){
+        vector<char> fst, snd;
+        fst.reserve(n); snd.reserve(n);
+
+        //generating strings randomly
+        for (int i=0; i<n; i++){
+            fst.push_back('A'+(rand() % alph_size));
+            cout << fst[i];
+        }
+        cout << endl;
+        for (int i=0; i<n; i++){
+            snd.push_back('A'+(rand() % alph_size));
+            cout << snd[i];
+        }
+        cout << endl;
+        //creating the alignment matrix
+        alibio::seq_alignment<int> my_alignment(myscores, fst , snd);
+
+//GLOBAL ALIGNMENT - LINEAR GAP PENALTY
+        time (&start);//reset timer
+        my_alignment.nw_align();//do the alignment
+        my_alignment.print_alignment();
+        //writing time elapsed in time.dat
+        time (&end);
+        dif = difftime (end,start);
+
+        out_time.open("time.dat", ofstream::out | ofstream::app);
+        out_time << dif << endl; out_time.close();
+
+//GLOBAL ALIGNMENT - AFFINE GAP PENALTY
+        time (&start);//reset timer
+        my_alignment.nw_affine_align();//do the alignment
+        my_alignment.print_alignment();
+        //writing time elapsed in time.dat
+        time (&end);
+        dif = difftime (end,start);
+
+        out_time.open("time.dat", ofstream::out | ofstream::app);
+        out_time << dif << endl; out_time.close();
+
+//GLOBAL ALIGNMENT - AFFINE GAP PENALTY - LINEAR SPACE
+        time (&start);//reset timer
+        my_alignment.nw_linear_align();//do the alignment
+        my_alignment.print_alignment();
+        //writing time elapsed in time.dat
+        time (&end);
+        dif = difftime (end,start);
+
+        out_time.open("time.dat", ofstream::out | ofstream::app);
+        out_time << dif << endl; out_time.close();
+     }
+     return 0;
+}
+@
+The produced files are then formatted by the following \href{http://www.gnu.org/software/gawk/gawk.html}{GAWK} script creating [[gnuplot_time.dat]] and [[gnuplot_space.dat]] with the [[UNIX]] commands
+\begin{verbatim}
+$ performance.awk time.dat >> gnuplot_time.dat
+$ performance.awk space.dat >> gnuplot_space.dat
+\end{verbatim}
+<<performance.awk>>=
+#!/usr/bin/awk -f
+BEGIN {ORS=" "; nchar="0";}
+{
+    if (NR==1) base=$0;
+
+    if (NR%3==1) {
+        print "\n" nchar "\t" $0;
+        nchar+=10;
+    }
+    else print "\t" $0;
+}
+END{print "\n";}
+@
+
+The data files obtained are then plotted with the following \href{http://www.gnuplot.info/}{Gnuplot} script.
+<<performance.plot>>=
+#!/usr/bin/gnuplot
+set terminal postscript eps enhanced color
+set xlabel "Input size (chars)"
+
+    set out 'gnuplot_time.eps'
+        #set xlabel "Input size (chars)"
+        set ylabel "Time (sec)"
+        set title "Time performance"
+        plot \
+            'gnuplot_time.dat' using 1:2 title 'nw align' \
+                               smooth csplines lt 1 linewidth 3, \
+            'gnuplot_time.dat' using 1:3 title 'nw affine align' \
+                               smooth csplines lt 2 linewidth 3, \
+            'gnuplot_time.dat' using 1:4 title 'nw linear align' \
+                               smooth csplines lt 3 linewidth 3
+
+    set out 'gnuplot_space.eps'
+        #set xlabel "Input size (chars)"
+        set ylabel "Space (Bytes)"
+        set format y "%.0s{/Symbol \327}10^{%S}"
+        set title "Space performance"
+        #unset logscale
+        plot \
+            'gnuplot_space.dat' using 1:2 title 'nw align' \
+                                smooth csplines lt 1 linewidth 3, \
+            'gnuplot_space.dat' using 1:3 title 'nw affine align' \
+                                smooth csplines lt 2 linewidth 3, \
+            'gnuplot_space.dat' using 1:4 title 'nw linear align' \
+                                smooth csplines lt 3 linewidth 3
+
+set logscale xy
+set xtics (1000,1500,2000,2500,3000)
+
+    set out 'gnuplot_time_compl.eps'
+        #set xlabel "Input size (chars)"
+        set ylabel "Time (sec)"
+        set format y "10^{%L}"
+        set title "Time complexity (log axes)"
+        plot [1000:] \
+            'gnuplot_time.dat' using 1:2 title 'nw align' \
+                               smooth csplines lt 1 linewidth 3, \
+            'gnuplot_time.dat' using 1:3 title 'nw affine align' \
+                               smooth csplines lt 2 linewidth 3, \
+            'gnuplot_time.dat' using 1:4 title 'nw linear align' \
+                               smooth csplines lt 3 linewidth 3, \
+            (x**2)/100000 title 'quadratic' smooth csplines lt -1
+
+    set out 'gnuplot_space_compl.eps'
+        #set xlabel "Input size (chars)"
+        set ylabel "Space (Bytes)"
+        #set xtics (1000,1500,2000,2500,3000)
+        set format y "%.0s{/Symbol \327}10^{%S}"
+        set title "Space complexity (log axes)"
+        plot [1000:3000][:500000000] \
+            'gnuplot_space.dat' using 1:2 title 'nw align'\
+                                smooth csplines lt 1 lw 3,\
+            'gnuplot_space.dat' using 1:3 title 'nw affine align' \
+                                smooth csplines lt 2 lw 3, \
+            x**2 title 'quadratic' smooth csplines lt -1
+@
+
+\section{Results}\label{results}
+The following graphs represent our tests for time and space performances; they show which algorithms are faster or memory-hungrier. As expected, we can also notice that the space complexity of [[<<nw_linear_align>>]] is linear.
+\begin{center}
+\includegraphics{figures/gnuplot_time.eps}
+\label{time graph}
+\includegraphics{figures/gnuplot_space.eps}
+\label{space graph}
+\end{center}
+
+To have a visual indication of the polynomial functions rank we use logaritmic scale for both axes, now polynomials are straight lines whose slope depends on rank: if a function looks parallel to $x^2$ we can assure that its implementation is really quadratic.
+As expected, all the functions are quadratic-time, [[<<nw_align>>]] and [[<<nw_affine_align>>]] are also quadratic-space.
+\begin{center}
+\includegraphics{figures/gnuplot_time_compl.eps}
+\label{time complexity graph}
+\includegraphics{figures/gnuplot_space_compl.eps}
+\label{space complexity graph}
+\end{center}
+
+\section{Performance comparison (TODO)}\label{perf_comp}
+In this sections we compare our alignment implementations performances with other already aveilable packages
+
+\chapter{Tests}
+\section{Introduction}
+In order to test the current and the possible future versions of the produced libraries, we adopt the techinique of ''automate regression testing'', which performs a sequence of tests to compare the expected behaviour of the classes with their real behaviour or to compare the new versions of our classes implementation with the old ones.
+This is done by comparing the output of some appropriate test programs executed on the latest versions of the classes, against the expected output or against the output of the same test programs executed on the old implementation of the classes.
+
+The test requires the following tools:
+\begin{itemize}
+\item A test program (one for each class), which contains a main function implementing tests
+for all the features of the tested class;
+\item A behaviour file (one for each class), which contains the tests inputs and the
+corresponding expected outputs. The inputs provided are supposed to cover all the possible situations (even the unexpected ones) that can rise using the class;
+\item An output file (one for each class), which contains the actual outputs produced by the test program executed on the latest version of the class;
+\item A script program that executes the test programs, performs the comparison between the expected and the actual outputs, and reports the possible differences;
+\end{itemize}
+
+Then, the programmer must make sure that the behaviour of the classes hasn't changed, except in expected ways.
+
+\section{Structure of the test program}
+\subsubsection{Description of the main function}
+The test program contains a main function that implements all the suitable tests. Each test is identified by a number code (starting from 1), and can be executed independently from others.
+
+The main function reads a code as parameter and selects the corresponding test. Then it reads the requested test inputs from standard input, executes the test and prints the results on standard output.
+If incorrect parameters or input values are found, the program reports an error and, if it's impossible to continue, ends the test and returns the $0$ value.
+
+\subsubsection{Description of the variables}
+The [[main]] function uses two variables:
+\begin{itemize}
+\item [[line]], of [[string]] data type, used to store each line read from the standard input.
+\item [[code]], of [[int]] type, used to store the codes of the tests to execute.
+\end{itemize}
+
+<<main function for test: head>>=
+#define SUCCESS 0
+#define CODE_ERROR 1
+#define INPUT_ERROR 2
+#define SYNTAX_ERROR 3
+
+int main (int argc, char *argv[]){
+    int code;
+
+    //check the correctness of the parameters
+
+    if(argc<2) {
+        std::cout << "Usage: " << argv[0] << " TEST_CODE\n";
+        return SYNTAX_ERROR;
+    }
+    code=atoi(argv[1]);
+    if(code==0) {
+        std::cout << "Error while testing: incorrect code.\n";
+        return CODE_ERROR;
+    }
+@
+
+<<main function for test: tail>>=
+    return SUCCESS;
+}
+
+@
+
+\section{Structure of the test file}
+The test file must respect the following syntax:
+\begin{itemize}
+\item the first line of each test must begin with the special sequence ''[[=====]]'';
+everything after that is ignored and can, therefore, be viewed as a comment;
+\item after that, a test identifier (a numerical code) is expected;
+\item the third line must begin with the ''[[*****]] sequence''; everything after
+that is ignored and can, therefore, be viewed as a comment;
+\item in the following lines, input data must be specified (each input on a different
+line);
+\item after all the input data have been entered, the program expects a line beginning
+with the ''[[*****]] sequence''; everything after that is ignored and can, therefore,
+be viewed as a comment;
+\item in the following lines, the expected outputs must be specified;
+\item after all the expected outputs have been entered, either another test or the end of the file is expected.
+\end{itemize}
+
+\newpage
+
+\subsection*{Test file example}
+
+\begin{verbatim}
+=====set_score(char, char, T) - 2 chars 1 T=====
+3
+*****
+G
+C
+5
+*****
+5
+=====set_match_score(T) - 1 T=====
+4
+*****
+3
+*****
+      A     C     G     T
+A     3     -1    -1    -1
+C     -1    3     -1    -1
+G     -1    -1    3     -1
+T     -1    -1    -1    3
+gap cost=1
+gap extension cost=1
+\end{verbatim}
+
+\section{Test program for [[score_matrix]] class}
+This program implements all the suitable tests for the [[<<score_matrix>>]] class.
+
+<<score_matrix.cpp>>=
+<<licence>>
+#include <iostream>
+#include <stdlib.h>
+#include <alibio/two_sequence.hpp>
+
+<<main function for test: head>>
+switch(code) {
+    case 1:
+        <<testing score_matrix(alibio::alphabet) constructor>>
+        break;
+    case 2:
+        <<testing set_score(char, char, T) function>>
+        break;
+    case 3:
+        <<testing get_score(char, char) function>>
+        break;
+    case 4:
+        <<testing set_match_score(T) function>>
+        break;
+    case 5:
+        <<testing set_mismatch_score(T) function>>
+        break;
+    case 6:
+        <<testing set_gap_cost(T) function>>
+        break;
+    case 7:
+        <<testing set_gap_cost(T,T) function>>
+        break;
+    case 8:
+        <<testing get_gap_cost() function>>
+        break;
+    case 9:
+        <<testing get_extend_gap_cost() function>>
+        break;
+    case 10:
+        <<testing print() function>>
+        break;
+    default:
+        std::cout << "Error while testing: code '" << code << "' not found";
+}
+<<main function for test: tail>>
+@
+
+\subsection{Preparing [[score_matrix]] object}
+<<preparing score_matrix object>>=
+    //declaring an alphabet for DNA
+    alibio::alphabet dna("DNA");
+
+    //adding symbols to the alphabet
+    dna.add_symbol(alibio::symbol('A',"Adenine"));
+    dna.add_symbol(alibio::symbol('C',"Citosine"));
+    dna.add_symbol(alibio::symbol('T',"Thymine"));
+    dna.add_symbol(alibio::symbol('G',"Guanine"));
+
+    //creating the score matrix
+    alibio::score_matrix<float> myscores(dna);
+@
+
+\subsection{Testing [[score_matrix]] constructor}
+The test creates an [[alibio::alphabet]] object and uses it for instantiating a [[<<score_matrix>>]] object
+
+<<testing score_matrix(alibio::alphabet) constructor>>=
+{
+    <<preparing score_matrix object>>
+}
+@
+
+\subsection{Testing [[set_score]] function}
+The test reads from the input the size of the distance matrix that will be created
+using the generic constructor [[score_matrix(int dim)]] and prints it.
+Then reads a second size and resize the object using [[resize(int dim)]]. Finally
+prints the resized object on the standard output using [[print()]] function.
+
+<<testing set_score(char, char, T) function>>=
+{
+    <<preparing score_matrix object>>
+
+    //reading 2 chars from stdin
+    std::string line1;
+    std::string line2;
+
+    //reading 1 float from stdin
+    std::string line3;
+
+    std::getline(std::cin,line1,'\n');
+    std::getline(std::cin,line2,'\n');
+    std::getline(std::cin,line3,'\n');
+    myscores.set_score(line1[0], line2[0], atof(line3.c_str()));
+    cout << myscores.get_score(line1[0], line2[0]);
+}
+
+@
+
+\subsection{Testing [[get_score]] function}
+The test creates an [[alibio::alphabet]] and a [[<<score_matrix>>]] object, it reads from the standard input two characters (one per line) and prints the score of switching between the first to the second getting the value from the [[<<score_matrix>>]] object.
+If one or booth of the chars are not listed in the alphabet, the test prints an error message.
+
+<<testing get_score(char, char) function>>=
+{
+    <<preparing score_matrix object>>
+
+    //reading 2 chars from stdin
+    std::string line1;
+    std::string line2;
+    float score;
+
+    std::getline(std::cin,line1,'\n');
+    std::getline(std::cin,line2,'\n');
+    score=myscores.get_score(line1[0], line2[0]);
+    cout << score;
+}
+@
+
+\subsection{Testing [[set_match_score]] function}
+The test creates a [[<<score_matrix>>]] object 
+
+<<testing set_match_score(T) function>>=
+{
+    <<preparing score_matrix object>>
+
+    //reading 1 double from stdin
+    std::string line1;
+
+    std::getline(std::cin,line1,'\n');
+    myscores.set_match_score(atof(line1.c_str()));
+    myscores.print();
+}
+@
+
+\subsection{Testing [[set_mismatch_score]] function}
+The test creates a [[<<score_matrix>>]] object 
+
+<<testing set_mismatch_score(T) function>>=
+{
+    <<preparing score_matrix object>>
+
+    //reading 1 double from stdin
+    std::string line1;
+
+    std::getline(std::cin,line1,'\n');
+    myscores.set_mismatch_score(atof(line1.c_str()));
+    myscores.print();
+}
+@
+
+\subsection{Testing [[set_gap_cost]] function}
+The test creates a [[<<score_matrix>>]] object.
+
+<<testing set_gap_cost(T) function>>=
+{
+    <<preparing score_matrix object>>
+
+    //reading 1 double from stdin
+    std::string line1;
+
+    std::getline(std::cin,line1,'\n');
+    myscores.set_gap_cost(atof(line1.c_str()));
+    cout << myscores.get_gap_cost() << endl;
+    cout << myscores.get_extend_gap_cost();
+}
+@
+
+<<testing set_gap_cost(T,T) function>>=
+{
+    <<preparing score_matrix object>>
+
+    //reading 2 double from stdin
+    std::string line1, line2;
+
+    std::getline(std::cin,line1,'\n');
+    std::getline(std::cin,line2,'\n');
+    myscores.set_gap_cost(atof(line1.c_str()),atof(line2.c_str()));
+    cout << myscores.get_gap_cost() << endl;
+    cout << myscores.get_extend_gap_cost();
+}
+@
+
+\subsection{Testing [[get_gap_cost]] function}
+The test creates a [[<<score_matrix>>]] object.
+
+<<testing get_gap_cost() function>>=
+{
+    <<preparing score_matrix object>>
+
+    cout << myscores.get_gap_cost();
+}
+@
+
+\subsection{Testing [[get_extend_gap_cost]] function}
+The test creates a [[<<score_matrix>>]] object.
+
+<<testing get_extend_gap_cost() function>>=
+{
+    <<preparing score_matrix object>>
+
+    cout << myscores.get_extend_gap_cost();
+}
+@
+
+\subsection{Testing [[print]] function}
+The test creates a [[<<score_matrix>>]] object.
+
+<<testing print() function>>=
+{
+    <<preparing score_matrix object>>
+
+    myscores.print();
+}
+@
+
+\section{Test program for [[seq_alignment]] class}
+This program implements the tests for the [[<<seq_alignment>>]] class.
+
+<<seq_alignment.cpp>>=
+<<licence>>
+
+#include <iostream>
+#include <stdlib.h>
+#include <alibio/two_sequence.hpp>
+
+<<main function for test: head>>
+switch(code) {
+    case 1:
+        <<testing seq_alignment vector constructor>>
+    case 2:
+        <<testing seq_alignment string constructor>>
+        break;
+    case 3:
+        <<testing seq_alignment bio_string constructor>>
+        break;
+    case 4:
+        <<testing nw_align() function>>
+        break;
+    case 5:
+        <<testing sw_align() function>>
+        break;
+    case 6:
+        <<testing nw_affine_align() function>>
+        break;
+    case 7:
+        <<testing sw_affine_align() function>>
+        break;
+    case 8:
+        <<testing semiglobal_affine_align() function>>
+        break;
+    case 9:
+        <<testing nw_linear_align() function>>
+        break;
+    case 10:
+        <<testing sw_linear_align() function>>
+        break;
+    case 11:
+        <<testing semiglobal_linear_align() function>>
+        break;
+    case 12:
+        <<testing nw_affine_align() with a different alphabet>>
+        break;
+    default:
+        std::cout << "\nError while testing: code '" << code << "' not found";
+}
+<<main function for test: tail>>
+@
+
+\subsection{Testing [[seq_alignment]] constructors}
+
+This test verifies the [[<<seq_alignment>>]] vector constructor using the DNA alphabet and the default score matrix
+
+<<testing seq_alignment vector constructor>>=
+{
+    <<preparing score_matrix object>>
+
+    //reading 2 strings from stdin
+    std::string line1;
+    std::string line2;
+
+    std::getline(std::cin,line1,'\n');
+    std::getline(std::cin,line2,'\n');
+
+    vector<char> A(line1.begin(),line2.end());
+    vector<char> B(line1.begin(),line2.end());
+    //creating the alignment matrix
+    alibio::seq_alignment<float> my_alignment(myscores, A, B);
+}
+@
+
+This test verifies the [[<<seq_alignment>>]] string constructor using the DNA alphabet and the default score matrix
+
+<<testing seq_alignment string constructor>>=
+{
+    <<preparing score_matrix object>>
+
+    //reading 2 strings from stdin
+    std::string line1;
+    std::string line2;
+
+    std::getline(std::cin,line1,'\n');
+    std::getline(std::cin,line2,'\n');
+
+    //creating the alignment matrix
+    alibio::seq_alignment<float> my_alignment(myscores, line1, line2);
+}
+@
+
+This test verifies the [[<<seq_alignment>>]] [[bio_string]] constructor using the DNA alphabet and the default score matrix
+
+<<testing seq_alignment bio_string constructor>>=
+{
+    <<preparing score_matrix object>>
+
+    //declaring 2 sequences with "bio_string" class as primary structure and
+    //"empty" class as secondary and tertiary structures
+    alibio::sequence<alibio::bio_string,alibio::empty,alibio::empty> seq_one;
+    alibio::sequence<alibio::bio_string,alibio::empty,alibio::empty> seq_two;
+
+    //setting the alphabet (working on "seq_one.primary")
+    seq_one.primary.set_alphabet(dna);
+    seq_two.primary.set_alphabet(dna);
+
+    //reading 2 strings from stdin
+    std::string line1;
+    std::string line2;
+    std::getline(std::cin,line1,'\n');
+    std::getline(std::cin,line2,'\n');
+
+    //setting the sequence (working on "seq_one.primary")
+    seq_one.primary.set_sequence(line1);
+
+    //setting the sequence (working on "seq_two.primary")
+    seq_two.primary.set_sequence(line2);
+
+    //creating the alignment matrix
+    alibio::seq_alignment<float> my_alignment(myscores,
+                                              seq_one.primary, seq_two.primary);
+}
+@
+
+\subsection{Preparing [[seq_alignment]] object}
+In this section we prepare a [[<<seq_alignment>>]] object that will be used for all the alignment tests
+
+<<preparing seq_alignment object>>=
+
+    <<preparing score_matrix object>>
+
+    //modifying score matrix
+    myscores.set_match_score(5);
+    myscores.set_mismatch_score(-4);
+    myscores.set_gap_cost(10, 0.5);
+
+    //reading 2 strings from stdin
+    std::string line1;
+    std::string line2;
+    std::getline(std::cin,line1,'\n');
+    std::getline(std::cin,line2,'\n');
+
+    //creating the alignment object
+    alibio::seq_alignment<float> my_alignment(myscores, line1, line2);
+@
+
+\subsection{Testing [[nw_align]] function}
+<<testing nw_align() function>>=
+{
+    <<preparing seq_alignment object>>
+    my_alignment.nw_align();
+    my_alignment.print_alignment();
+}
+@
+
+\subsection{Testing [[sw_align]] function}
+<<testing sw_align() function>>=
+{
+    <<preparing seq_alignment object>>
+    my_alignment.sw_align();
+    my_alignment.print_alignment();
+}
+@
+
+\subsection{Testing [[nw_affine_align]] function}
+<<testing nw_affine_align() function>>=
+{
+    <<preparing seq_alignment object>>
+    my_alignment.nw_affine_align();
+    my_alignment.print_alignment();
+}
+@
+
+\subsection{Testing [[sw_affine_align]] function}
+<<testing sw_affine_align() function>>=
+{
+    <<preparing seq_alignment object>>
+    my_alignment.sw_affine_align();
+    my_alignment.print_alignment();
+}
+@
+
+\subsection{Testing [[semiglobal_affine_align]] function}
+<<testing semiglobal_affine_align() function>>=
+{
+    <<preparing seq_alignment object>>
+    my_alignment.semiglobal_affine_align();
+    my_alignment.print_alignment();
+}
+@
+
+\subsection{Testing [[nw_linear_align]] function}
+<<testing nw_linear_align() function>>=
+{
+    <<preparing seq_alignment object>>
+    my_alignment.nw_linear_align();
+    my_alignment.print_alignment();
+}
+@
+
+\subsection{Testing [[sw_linear_align]] function}
+<<testing sw_linear_align() function>>=
+{
+    <<preparing seq_alignment object>>
+    my_alignment.sw_linear_align();
+    my_alignment.print_alignment();
+}
+@
+
+\subsection{Testing [[semiglobal_linear_align]] function}
+<<testing semiglobal_linear_align() function>>=
+{
+    <<preparing seq_alignment object>>
+    my_alignment.semiglobal_linear_align();
+    my_alignment.print_alignment();
+}
+@
+
+\subsection{Testing [[nw_affine_align]] with a different alphabet}
+This test runs the [[nw_affine_align]] using a different alphabet
+<<testing nw_affine_align() with a different alphabet>>=
+{
+    //declaring an alphabet for DNA
+    alibio::alphabet prot("Protein");
+
+    //adding symbols to the alphabet
+    prot.add_symbol(alibio::symbol('A'));
+    prot.add_symbol(alibio::symbol('R'));
+    prot.add_symbol(alibio::symbol('N'));
+    prot.add_symbol(alibio::symbol('D'));
+    prot.add_symbol(alibio::symbol('C'));
+    prot.add_symbol(alibio::symbol('Q'));
+    prot.add_symbol(alibio::symbol('E'));
+    prot.add_symbol(alibio::symbol('G'));
+    prot.add_symbol(alibio::symbol('H'));
+    prot.add_symbol(alibio::symbol('I'));
+    prot.add_symbol(alibio::symbol('L'));
+    prot.add_symbol(alibio::symbol('K'));
+    prot.add_symbol(alibio::symbol('M'));
+    prot.add_symbol(alibio::symbol('F'));
+    prot.add_symbol(alibio::symbol('P'));
+    prot.add_symbol(alibio::symbol('S'));
+    prot.add_symbol(alibio::symbol('T'));
+    prot.add_symbol(alibio::symbol('W'));
+    prot.add_symbol(alibio::symbol('Y'));
+    prot.add_symbol(alibio::symbol('V'));
+    prot.add_symbol(alibio::symbol('B'));
+    prot.add_symbol(alibio::symbol('Z'));
+    prot.add_symbol(alibio::symbol('X'));
+
+    //creating the score matrix for "prot" alphabet
+    alibio::score_matrix<float> prot_scores(prot);
+
+    //reading 2 strings from stdin
+    std::string line1;
+    std::string line2;
+    //reading match score from stdin
+    std::string line3;
+    //reading gap cost from stdin
+    std::string line4;
+    //reading extending gap cost from stdin
+    std::string line5;
+    //reading mismatch score from stdin
+    std::string line6;
+
+    std::getline(std::cin,line1,'\n');
+    std::getline(std::cin,line2,'\n');
+    std::getline(std::cin,line3,'\n');
+    std::getline(std::cin,line4,'\n');
+    std::getline(std::cin,line5,'\n');
+    std::getline(std::cin,line6,'\n');
+
+    //modifying score matrix
+    prot_scores.set_match_score(atof(line3.c_str()));
+    prot_scores.set_gap_cost(atof(line4.c_str()),atof(line5.c_str()));
+    prot_scores.set_mismatch_score(atof(line6.c_str()));
+
+    //creating the alignment matrix
+    alibio::seq_alignment<float> prot_alignment(prot_scores, line1, line2);
+
+    //printing alignment
+    prot_alignment.nw_affine_align();
+    prot_alignment.print_alignment();
+}
+@
+
+\section{Other tests}
+\subsection{Memory leaks test}
+Because of the great amount of operations over arrays that are used in our library we though that there was great probabilities of memory leaks in our software so we decided to test it with a Free Software \ref{def-freesoft} project called \href{http://valgrind.org/}{Valgrind} that includes a powerfull memory analyzer.
+
+Using this software is very easy: we just had to launch owr example program [[<<two_sequence_example.cpp>>]] with the command
+\begin{verbatim}
+$ valgrind --leak-check=yes ./two_sequence_example.bin
+\end{verbatim}
+
+\subsection{Random tests}
+We decided to test our functions against random generated sequences hoping to detect errors in algorithms implementation that didn't appear in our previous tests
+
+We wrote code for calculating alignment scores by printed alignment, this way we could detect inconsistencies between them and find critical sequences for further tests.
+Decommenting the following debugging code we obtain additional output that will be used in [[<<random_test.cpp>>]].
+
+The code reads the alignment memorized in [[line1]], [[line2]] and [[line3]] and in the first part calculates the alignment score supposing we did an affine gap penalty \ref{def-aff_gap} alignment, while in the second part it does the same for linear gap penalty \ref{def-lin_gap} alignments.
+<<debug_random>>=
+//decomment for random test
+/*
+T true_score=0;
+It=line2->begin();
+for (int i=0;It!=line2->end();i++){
+    if ((*line2)[i]==' '){//gap
+        if ((*line1)[i]=='-'){//gap in A
+            if (i>0 && (*line1)[i-1]=='-')
+                true_score-=extend_gap_cost;
+            else true_score-=gap_cost;
+        } else {//gap in B
+            if (i>0 && (*line3)[i-1]=='-')
+                true_score-=extend_gap_cost;
+            else true_score-=gap_cost;
+        }
+    }else true_score+=c_matrix->get_score((*line1)[i],(*line3)[i]);
+    It++;
+}
+
+T lin_score=0;
+It=line2->begin();
+for (int i=0;It!=line2->end();i++){
+    if ((*line2)[i]==' '){//gap
+        if ((*line1)[i]=='-'){//gap in A
+            lin_score-=gap_cost;
+        } else {//gap in B
+            lin_score-=gap_cost;
+        }
+    }else lin_score+=c_matrix->get_score((*line1)[i],(*line3)[i]);
+    It++;
+}
+
+std::cout<<"True alignment score:"<<true_score<<" score:"<<lin_score << "\n";
+//*/
+@
+
+The actual program generates random sequences of random length but not longer than the value in [[max_seq_length]]. It creates them upon a specified alphabet whose length is given in [[alph_size]] variable, then it calls all the alignment functions.
+
+The whole procedure is repeted as many times as indicated in [[repetitions]] variable.
+<<random_test.cpp>>=
+<<licence>>
+#include <iostream>
+#include <stdlib.h>
+#include <alibio/two_sequence.hpp>
+
+int main(){
+    int alph_size=4;
+    int repetitions=2000;
+    int max_seq_length=30;
+
+    //Getting internal clock time for random
+    srand(time(NULL));
+    //declaring an alphabet
+    alibio::alphabet my_alph("my alphabet");
+    //adding symbols to the alphabet
+    for (int i=0; i<alph_size; i++){
+        my_alph.add_symbol(alibio::symbol('A'+i));
+    }
+    alibio::score_matrix<> myscores(my_alph);
+    //changing scores
+    myscores.set_match_score(5);
+    myscores.set_mismatch_score(-4);
+    myscores.set_gap_cost(10, 0.5);
+
+    for (int n=0;n<repetitions;n++){
+        vector<char> fst, snd;
+        int n=rand() % max_seq_length;
+        int m=rand() % max_seq_length;
+        fst.reserve(n);
+        snd.reserve(m);
+
+        //generating strings randomly
+        for (int i=0; i<n; i++){
+            fst.push_back('A'+(rand() % alph_size));
+            cout << fst[i];
+        } cout << endl;
+        for (int j=0; j<m; j++){
+            snd.push_back('A'+(rand() % alph_size));
+            cout << snd[j];
+        } cout << endl;
+        //creating the alignment matrix
+        alibio::seq_alignment<> my_alignment(myscores, fst , snd);
+
+        //do the alignments
+        cout << "Optimal global alignment (linear gap penalty)\n";
+        my_alignment.nw_align();
+        my_alignment.print_alignment();
+
+        cout << "Optimal local alignment (linear gap penalty)\n";
+        my_alignment.sw_align();
+        my_alignment.print_alignment();
+
+        cout << "Optimal global alignment (affine gap penalty)\n";
+        my_alignment.nw_affine_align();
+        my_alignment.print_alignment();
+        
+        cout << "Optimal local aligment (affine gap penalty)\n";
+        my_alignment.sw_affine_align();
+        my_alignment.print_alignment();
+
+        cout << "Optimal semiglobal alignment (affine gap penalty)\n";
+        my_alignment.semiglobal_affine_align();
+        my_alignment.print_alignment();
+
+        cout << "Optimal global aligment (affine gap penalty-linear space)\n";
+        my_alignment.nw_linear_align();
+        my_alignment.print_alignment();
+        
+        cout << "Optimal local aligment (affine gap penalty-linear space)\n";
+        my_alignment.sw_linear_align();
+        my_alignment.print_alignment();
+
+        cout<<"Optimal semiglobal aligment (affine gap penalty-linear space)\n";
+        my_alignment.semiglobal_linear_align();
+        my_alignment.print_alignment();
+    }
+    return 0;
+}
+@
+To analyze the huge output of our test progam we wrote a \href{http://www.gnu.org/software/gawk/gawk.html}{GAWK} script that verifies not only the correctness of reported alignment scores but also that affine alignments gave the same results of the corresponding linear-space ones.
+The script needs only score values to work, so we need to filter the [[<<random_test.cpp>>]] output with the [[UNIX]] command [[grep]] and then give it as input to the script [[<<random_test.awk>>]].
+We did it with the following command assuming we compiled [[<<random_test.cpp>>]] as [[random_test.bin]]
+\begin{verbatim}
+$ ./random_test.bin | grep score | ./random_test.awk
+\end{verbatim}
+The script writes a line for each error found, if no errors are found nothing is printed.
+<<random_test.awk>>=
+#!/usr/bin/awk -f
+BEGIN {}
+{   //for each alignment we memorize the alignment score in the variable "old"
+    if ((NR%16)%2==1) old=$3;
+    if ((NR%16)%2==0){
+        //in case of linear gap penalty we compare with the corresponding value
+        if (NR%16==2 || NR%16==4){
+            if ($4!=old) print old "<-->" $4 " ERROR " NR%16 "\n";
+        }
+        //in case of affine gap penalty we do the same
+        else if($3!=old) print old "<-->" $3 " ERROR " NR%16 "\n";
+    }
+    else if (NR%16==5) var5=$3;//nw_affine_align score
+    else if (NR%16==7) var7=$3;//sw_affine_align score
+    else if (NR%16==9) var9=$3;//semiglobal_affine_align score
+    else if (NR%16==11) {//comparing nw_affine and nw_linerar
+        if ($3!=var5) print var5 "<-->" $3 " GLOBAL\n";
+    } else if (NR%16==13) {//comparing sw_affine and sw_linerar
+        if ($3!=var7) print var7 "<-->" $3 " LOCAL\n";
+    } else if (NR%16==15) {//comparing semiglobal_affine and semiglobal_linerar
+        if ($3!=var9) print var9 "<-->" $3 " SEMIGLOBAL\n";
+    }
+}
+END{}
+@
+This test permitted to discover a number of subtle software bugs that couldn't be found with the previous tests.
+
+\chapter{Methods}
+
+\section{[[score_matrix]] Class}
+\synopsis{[[score_matrix]]}
+         {[[const alibio::alphabet&]]}
+         {[[void]]}
+         {[[<<score_matrix constructor>>]] creates a new object for the given [[alibio::alphabet]]}
+         {-}
+         {-}
+\synopsis{[[~score_matrix]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<score_matrix destructor>>]] deallocates memory used by the [[<<score_matrix>>]]}
+         {-}
+         {-}
+\synopsis{[[set_score]]}
+         {[[char]];[[char]];[[T]]}
+         {[[void]]}
+         {[[<<set_score>>]] sets the score of mismatch between the 2 [[char]] to the given [[T]] value}
+         {-}
+         {-}
+\synopsis{[[get_score]]}
+         {[[char]];[[char]]}
+         {[[T]]}
+         {[[<<get_score>>]] returns the score of a mismatch between the 2 given [[char]]}
+         {-}
+         {-}
+\synopsis{[[set_match_score]]}
+         {[[T]]}
+         {[[void]]}
+         {[[<<set_match_score>>]] sets the score for matching chars}
+         {-}
+         {-}
+\synopsis{[[set_mismatch_score]]}
+         {[[T]]}
+         {[[void]]}
+         {[[<<set_mismatch_score>>]] sets the score for mismatching chars}
+         {-}
+         {-}
+\synopsis{[[set_gap_cost]]}
+         {[[T]];[[T]]}
+         {[[void]]}
+         {[[<<set_gap_cost>>]] sets the score for gap insertions}
+         {-}
+         {-}
+\synopsis{[[print]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<print>>]] prints the score matrix}
+         {-}
+         {-}
+
+\section{[[seq_alignment]] Class}
+\synopsis{[[seq_alignment]]}
+         {[[const score_matrix&]];[[const vector<char>&]];[[const vector<char>&]]}
+         {[[void]]}
+         {[[<<seq_alignment constructors>>]] create a new object for the given [[<<score_matrix>>]] and [[vector<char>]]}
+         {-}
+         {-}
+
+\synopsis{[[seq_alignment]]}
+         {[[const score_matrix&]];[[biostring]];[[biostring]]}
+         {[[void]]}
+         {[[<<seq_alignment constructors>>]] create a new object for the given [[<<score_matrix>>]] and [[alibio::biostring]]s}
+         {-}
+         {-}
+
+\synopsis{[[seq_alignment]]}
+         {[[const score_matrix&]];[[const string&]];[[const string&]]}
+         {[[void]]}
+         {[[<<seq_alignment constructors>>]] create a new object for the given [[<<score_matrix>>]] and [[strings]]}
+         {-}
+         {-}
+
+\synopsis{[[~seq_alignment]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<seq_alignment destructor>>]] deallocates memory used by the [[<<seq_alignment>>]]}
+         {-}
+         {-}
+
+\synopsis{[[print_alignment]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<print_alignment>>]] prints the last calculated alignment}
+         {-}
+         {-}
+
+\synopsis{[[nw_align]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<nw_align>>]] calculates a global alignment using linear gap panalties}
+         {-}
+         {-}
+
+\synopsis{[[sw_align]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<sw_align>>]] calculates a local alignment using linear gap panalties}
+         {-}
+         {-}
+
+\synopsis{[[nw_affine_align]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<nw_affine_align>>]] calculates a global alignment using affine gap panalties}
+         {-}
+         {-}
+
+\synopsis{[[sw_affine_align]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<sw_affine_align>>]] calculates a local alignment using affine gap panalties}
+         {-}
+         {-}
+
+\synopsis{[[semiglobal_affine_align]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<semiglobal_affine_align>>]] calculates a semiglobal alignment using affine gap panalties}
+         {-}
+         {-}
+
+\synopsis{[[nw_linear_align]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<nw_linear_align>>]] calculates a global alignment using affine gap panalties and linear memory}
+         {-}
+         {-}
+\synopsis{[[sw_linear_align]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<sw_linear_align>>]] calculates a local alignment using affine gap panalties and linear memory}
+         {-}
+         {-}
+\synopsis{[[semiglobal_linear_align]]}
+         {[[void]]}
+         {[[void]]}
+         {[[<<semiglobal_linear_align>>]] calculates a semiglobal alignment using affine gap panalties and linear memory}
+         {-}
+         {-}
+
+\backmatter
+
+\begin{thebibliography}{99}
+
+\bibitem{boost} \emph{Boost Library documentation}, www.boost.org
+
+\bibitem{LaTeX} Tobias Oeitker: \emph{The not so short introduction to \LaTeX},
+Copyright \copyright 1998 Tobias Oeitker and all contributors
+
+\bibitem{noweb} \emph{Noweb documentation}, www.eecs.harvard.edu/~nr/noweb/
+
+\bibitem{CVS} \emph{CVS documentation}, www.cvshome.org
+\end{thebibliography}
+
+%\chapter*{Thanks and Greatings}
+%\thispagestyle{empty}
+\end{document}

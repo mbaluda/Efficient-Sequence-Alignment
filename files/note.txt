@@ -1,0 +1,51 @@
+Pacchetti necessari
+libboost-dev
+libboost-graph-dev
+tetex-extra
+
+Needleman, S. B. and Wunsch, C. D. (1970) J. Mol. Biol. 48, 443-453.
+Smith TF, Waterman MS (1981) J. Mol. Biol 147(1);195-7
+E. Myers and W. Miller, "Optimal Alignments in Linear Space," CABIOS 4, 1 (1988), 11-17.
+    
+
+EMBOSS
+EMBOSS: The European Molecular Biology Open Software Suite (2000)
+Rice,P. Longden,I. and Bleasby,A.
+
+INTERFACCE GRAFICHE DA CLI
+kaptain
+http://kaptain.sourceforge.net/
+Pise
+http://www.pasteur.fr/recherche/unites/sis/Pise/
+
+NOWEB
+
+"Literate Programming Simplified",
+
+@article{ramsey:simplified, 
+  author="Norman Ramsey",
+  title="Literate Programming Simplified",
+  journal="IEEE Software",
+  month=sep, pages="97--105",
+  volume="11", number="5",
+  year="1994"} 
+
+Ramsey, N. (1994, September). Literate programming simplified. IEEE Software 11(5), 97--105.
+mancanza tool di sviluppo
+kate highlight
+http://www.scottcollins.net/articles/Kate.html
+LaTeX al posto di HTML
+**noweb considerations
+
+problemi c++/template
+Compiler error messages resulting from incorrect template arguments can be particularly difficult to decipher. Often times the error does not point to the location of the template call-site, but instead exposes the internals of the template, which the user should never have to see.
+
+REGRESSION TEST
+TEST CASUALI
+
+VALGRIND for memory leaks
+http://valgrind.org
+Valgrind: A Program Supervision Framework.
+http://valgrind.org/docs/valgrind2003.ps.bz2
+Nicholas Nethercote and Julian Seward.
+Electronic Notes in Theoretical Computer Science 89 No. 2, 2003.
